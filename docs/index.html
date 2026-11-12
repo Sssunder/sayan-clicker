@@ -25,11 +25,13 @@
   body {
     background: var(--bg); color: var(--text);
     font: 100%/1.45 system-ui, "Segoe UI Variable Text", "Segoe UI", sans-serif;
-    display: flex; justify-content: center;
+    display: flex; justify-content: center; align-items: flex-start;
     -webkit-tap-highlight-color: transparent;
   }
   .app { width: min(430px, 100%); padding: 12px 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .app > * { flex-shrink: 0; }
   .row { display: flex; align-items: center; gap: 8px; }
+  .row.wrap { flex-wrap: wrap; row-gap: 6px; }
   .spacer { flex: 1; }
   .card {
     background: var(--card); border: 1px solid var(--hair); border-radius: 20px;
@@ -123,6 +125,32 @@
   .popup .energy { margin-top: 6px; }
   .popup #quizQ { font-size: 14px; }
   .popup .opts button { padding: 7px 5px; font-size: 13px; }
+  .clickpill { background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent); }
+  .shop-title { font-size: 12.5px; font-weight: 700; color: var(--accent); }
+  .rate { font-size: 12px; font-weight: 700; color: var(--sage); }
+  #shopList { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .upg {
+    display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 12px;
+    background: color-mix(in srgb, var(--pill) 55%, var(--card)); transition: background .3s;
+  }
+  .upg.bought { background: color-mix(in srgb, var(--sage) 18%, var(--card)); }
+  .upg-ico { font-size: 18px; width: 26px; text-align: center; }
+  .upg-info { flex: 1; min-width: 0; }
+  .upg-name { font-size: 13px; font-weight: 700; }
+  .upg-lvl { color: var(--sub); font-weight: 600; font-size: 11px; }
+  .upg-eff { font-size: 11.5px; color: var(--sub); }
+  .buy {
+    padding: 6px 10px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    background: color-mix(in srgb, var(--accent) 14%, var(--card)); color: var(--accent);
+  }
+  .buy:disabled { opacity: .5; cursor: default; }
+  .savecode { margin-top: 8px; }
+  .savecode .pill { font-size: 11.5px; padding: 6px 10px; }
+  .popup .upg { padding: 5px 6px; gap: 6px; }
+  .popup .upg-ico { font-size: 15px; width: 20px; }
+  .popup .upg-name { font-size: 12px; }
+  .popup .upg-eff { font-size: 10.5px; }
+  .popup .buy { padding: 5px 8px; font-size: 11px; }
   @media (max-width: 340px) {
     .pill { padding: 6px 10px; font-size: 12px; }
     #score { font-size: 28px; }
@@ -168,10 +196,11 @@
   </section>
 
   <section class="card" aria-label="Прогресс">
-    <div class="row">
+    <div class="row wrap">
       <div class="score-big"><span id="score">0</span><span class="unit" id="unit">лапок</span></div>
       <div class="spacer"></div>
       <button class="pill" id="quizBtn" title="Попросить задачку сейчас (Q)">📐 Задачка</button>
+      <span class="pill clickpill" id="clickPill">+1/клик</span>
       <span class="pill combo" id="comboPill" hidden>Комбо x2</span>
     </div>
     <div class="row level"><span id="levelTitle"></span><div class="spacer"></div><span class="nums" id="levelNums"></span></div>
@@ -185,7 +214,20 @@
     </div>
   </section>
 
-  <footer class="foot">Саян живёт прямо на доске · прогресс сохраняется в этом браузере</footer>
+  <section class="card" aria-label="Прокачка">
+    <div class="row">
+      <span class="shop-title">🛒 Прокачка</span>
+      <div class="spacer"></div>
+      <span class="rate" id="ratePill">+0/сек</span>
+    </div>
+    <div id="shopList"></div>
+    <div class="row savecode">
+      <button class="pill" id="copySaveBtn" title="Скопировать код прогресса для другого компьютера">💾 Код сохранения</button>
+      <button class="pill" id="loadSaveBtn" title="Ввести код с другого компьютера">📥 Ввести код</button>
+    </div>
+  </section>
+
+  <footer class="foot">Прогресс сохраняется в браузере · 💾 код переносит его на другой компьютер</footer>
 </main>
 
 <script src="quiz-data.js"></script>
@@ -200,10 +242,11 @@ const store = {
   get() { try { return localStorage.getItem(SAVE_KEY); } catch (e) { return null; } },
   set(v) { try { localStorage.setItem(SAVE_KEY, v); } catch (e) {} },
 };
-const S = Object.assign({ pets: 0, solved: 0, bestCombo: 0, name: null, sound: true },
+const S = Object.assign({ pets: 0, solved: 0, bestCombo: 0, name: null, sound: true, upg: {}, t: 0 },
   JSON.parse(store.get() || "{}"));
+if (!S.upg || typeof S.upg !== "object") S.upg = {};
 
-const COMBO_WINDOW = 1.4, QUIZ_REWARD = D.quizReward, SLEEP_IDLE = 18;
+const SLEEP_IDLE = 18;
 const ZOOMIES_SECONDS = 6, ZOOMIES_COOLDOWN = 35, QUIZ_CADENCE = 26;
 
 let combo = 0, lastPet = -99, energy = 0, clicks = 0;
@@ -258,6 +301,54 @@ function levelInfo(count) {
 }
 function say(text) { $("bubble").textContent = text; }
 
+function fmt(n) {
+  if (n < 100000) return Math.round(n).toLocaleString("ru-RU");
+  n = Math.floor(n);
+  if (n < 1e6) return (n / 1e3).toFixed(1).replace(".", ",") + " тыс.";
+  if (n < 1e9) return (n / 1e6).toFixed(1).replace(".", ",") + " млн";
+  return (n / 1e9).toFixed(1).replace(".", ",") + " млрд";
+}
+
+const UPG = [
+  { id: "click", ico: "🐾", name: "Сильная лапа", base: 20, g: 1.6, max: 25,
+    eff: l => "клик даёт +" + (1 + l) },
+  { id: "bowl", ico: "🍖", name: "Миска вкусняшек", base: 30, g: 1.15, max: 50, rate: 1,
+    eff: l => "+" + l + "/сек · по 1 за миску" },
+  { id: "scratch", ico: "🪵", name: "Когтеточка", base: 250, g: 1.15, max: 50, rate: 6,
+    eff: l => "+" + (l * 6) + "/сек · по 6 за штуку" },
+  { id: "fountain", ico: "⛲", name: "Рыбный фонтан", base: 1500, g: 1.15, max: 50, rate: 25,
+    eff: l => "+" + (l * 25) + "/сек · по 25 за штуку" },
+  { id: "clone", ico: "🐈", name: "Саян-клон", base: 8000, g: 1.15, max: 50, rate: 120,
+    eff: l => "+" + (l * 120) + "/сек · по 120 за клона" },
+  { id: "quiz", ico: "🎓", name: "Учёный кот", base: 100, g: 2, max: 10,
+    eff: l => "задачка даёт +" + (D.quizReward + 15 * l) },
+  { id: "combo", ico: "🔥", name: "Комбо-мастер", base: 120, g: 2.2, max: 6,
+    eff: l => "комбо держится " + (1.4 + .25 * l).toFixed(2).replace(".", ",") + " с" },
+  { id: "zoom", ico: "⚡", name: "Тыгыдык-тренер", base: 200, g: 2.4, max: 5,
+    eff: l => "тыгыдык ×" + (5 + l) },
+];
+const lvl = id => S.upg[id] || 0;
+const cost = (u, l) => Math.floor(u.base * Math.pow(u.g, l));
+const clickPower = () => 1 + lvl("click");
+const passiveRate = () => UPG.reduce((s, u) => s + (u.rate || 0) * lvl(u.id), 0);
+const quizReward = () => D.quizReward + 15 * lvl("quiz");
+const comboWindow = () => 1.4 + .25 * lvl("combo");
+const zoomMult = () => 5 + lvl("zoom");
+
+function addPets(gain, silent) {
+  const prev = S.pets;
+  S.pets += gain;
+  const li0 = levelInfo(prev), li1 = levelInfo(S.pets);
+  if (li1.i > li0.i) { say("Новый уровень: " + li1.title + "! 🎉"); play("levelup"); return true; }
+  if (!silent) {
+    for (const k in D.milestones) {
+      const th = +k;
+      if (prev < th && S.pets >= th) { say(D.milestones[k]); return true; }
+    }
+  }
+  return false;
+}
+
 function floatText(text, x, y, color) {
   const el = document.createElement("span");
   el.className = "float";
@@ -282,6 +373,7 @@ function floatAtCat(text, color) {
 }
 
 function save() {
+  S.t = Date.now();
   store.set(JSON.stringify(S));
 }
 function queueSave() {
@@ -313,7 +405,7 @@ function startZoomies(now) {
   zoomiesUntil = now + ZOOMIES_SECONDS;
   zoomiesCooldownUntil = now + ZOOMIES_SECONDS + ZOOMIES_COOLDOWN;
   energy = 100;
-  say("ТЫГЫДЫК! ⚡ Клики дают ×5 лапок!");
+  say("ТЫГЫДЫК! ⚡ Клики дают ×" + zoomMult() + " лапок!");
   play("zoomies");
 }
 
@@ -321,31 +413,27 @@ function pet() {
   const now = performance.now() / 1000;
   lastActivity = now; nextIdleQuiz = now + 75;
   initAudio();
-  let gain = 1;
+  let gain = clickPower();
   if (sleeping) {
     sleeping = false; wakePoseUntil = now + 1.5; gain += 5;
     say((S.name ? S.name + ", " : "") + "Саян проснулся! +5 лапок за побудку 🌤");
     play("meow");
   }
-  combo = (now - lastPet <= COMBO_WINDOW) ? combo + 1 : 1;
+  combo = (now - lastPet <= comboWindow()) ? combo + 1 : 1;
   lastPet = now;
   S.bestCombo = Math.max(S.bestCombo, combo);
   if (combo >= 10) gain += 2; else if (combo >= 5) gain += 1;
-  if (now < zoomiesUntil) gain *= 5;
-  const before = levelInfo(S.pets).i;
-  S.pets += gain;
+  if (now < zoomiesUntil) gain *= zoomMult();
+  const celebrated = addPets(gain);
   clicks++;
   if (!sleeping) {
     energy = Math.min(100, energy + 2);
     if (energy >= 100 && now >= zoomiesCooldownUntil) startZoomies(now);
   }
   squash.vel -= 5.5;
-  floatAtCat("+" + gain);
+  floatAtCat("+" + fmt(gain));
   tap();
-  const after = levelInfo(S.pets);
-  if (after.i > before) { say("Новый уровень: " + after.title + "! 🎉"); play("levelup"); }
-  else if (D.milestones[String(S.pets)]) say(D.milestones[String(S.pets)]);
-  else if (combo === 5) say("Комбо x5! Саян мурчит от восторга 🔥");
+  if (combo === 5 && !celebrated) say("Комбо x5! Саян мурчит от восторга 🔥");
   if (clicks % QUIZ_CADENCE === 0 && !quiz) spawnQuiz();
   refresh();
   queueSave();
@@ -381,10 +469,11 @@ function answer(i) {
   fb.hidden = false;
   if (i === quiz.c) {
     btns[i].className = "right";
-    S.pets += QUIZ_REWARD; S.solved++;
-    fb.textContent = "Верно! +" + QUIZ_REWARD + " лапок 🐾";
+    const rw = quizReward();
+    addPets(rw); S.solved++;
+    fb.textContent = "Верно! +" + rw + " лапок 🐾";
     play("treat");
-    floatAtCat("+" + QUIZ_REWARD, "var(--sage)");
+    floatAtCat("+" + rw, "var(--sage)");
     reviewTimer = setTimeout(hideQuiz, 1200);
   } else {
     btns[i].className = "wrong";
@@ -400,10 +489,12 @@ function answer(i) {
 function refresh() {
   const li = levelInfo(S.pets);
   $("levelTitle").textContent = "Ур. " + (li.i + 1) + " · " + li.title;
-  $("levelNums").textContent = li.next ? S.pets + " / " + li.next[0] : S.pets + " · максимум";
+  $("levelNums").textContent = li.next ? fmt(S.pets) + " / " + fmt(li.next[0]) : fmt(S.pets) + " · максимум";
   $("levelBar").style.width = (li.ratio * 100).toFixed(1) + "%";
   $("solved").textContent = "📐 " + S.solved;
-  $("unit").textContent = plural(S.pets);
+  $("unit").textContent = plural(Math.floor(S.pets));
+  $("clickPill").textContent = "+" + fmt(clickPower()) + "/клик";
+  $("ratePill").textContent = "+" + fmt(passiveRate()) + "/сек";
   $("mood").textContent = sleeping ? "😴" : performance.now() / 1000 < zoomiesUntil ? "⚡"
     : combo >= 5 ? "😻" : "👀";
   $("nameLine").hidden = !S.name;
@@ -412,9 +503,16 @@ function refresh() {
 }
 
 let lastT = performance.now();
+let lastShopUi = 0, lastAutoSave = 0;
 function tick(t) {
   const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
   const now = t / 1000;
+  const rate = passiveRate();
+  if (rate > 0) {
+    addPets(rate * dt, true);
+    if (now - lastAutoSave > 5) { lastAutoSave = now; save(); }
+  }
+  if (t - lastShopUi > 250) { lastShopUi = t; updateShop(); }
   springStep(squash, dt);
   const wrap = $("catWrap");
   let x = 0, tilt = 0, bob = 0;
@@ -447,11 +545,11 @@ function tick(t) {
   }
   if (!quiz && now > nextIdleQuiz) { nextIdleQuiz = now + 75; spawnQuiz(); }
   const cp = $("comboPill");
-  if (combo >= 2 && now - lastPet <= COMBO_WINDOW) { cp.hidden = false; cp.textContent = "Комбо x" + combo; }
+  if (combo >= 2 && now - lastPet <= comboWindow()) { cp.hidden = false; cp.textContent = "Комбо x" + combo; }
   else cp.hidden = true;
   shownScore += (S.pets - shownScore) * Math.min(1, dt * 10);
   if (Math.abs(S.pets - shownScore) < .6) shownScore = S.pets;
-  $("score").textContent = String(Math.round(shownScore));
+  $("score").textContent = fmt(shownScore);
   $("energyBar").style.width = energy.toFixed(0) + "%";
   setPose();
   requestAnimationFrame(tick);
@@ -475,13 +573,13 @@ $("soundBtn").addEventListener("click", () => {
   refresh(); queueSave();
 });
 $("resetBtn").addEventListener("click", () => {
-  if (!confirm("Начать заново? Лапки, уровень и задачки обнулятся.\nИмя и звук останутся.")) return;
-  S.pets = 0; S.solved = 0; S.bestCombo = 0;
+  if (!confirm("Начать заново? Лапки, прокачка и задачки обнулятся.\nИмя и звук останутся.")) return;
+  S.pets = 0; S.solved = 0; S.bestCombo = 0; S.upg = {};
   combo = 0; energy = 0; clicks = 0; shownScore = 0; sleeping = false;
   hideQuiz();
   say("Новый ученик за партой! Мяу — начнём с первой лапки! 🐾");
   play("meow");
-  refresh(); save();
+  refresh(); updateShop(); save();
 });
 $("titleBtn").addEventListener("click", () => {
   const name = prompt("Как тебя зовут? Имя появится под заголовком.", S.name || "");
@@ -511,7 +609,8 @@ window.addEventListener("storage", e => {
     S.bestCombo = Number(inc.bestCombo) || 0;
     S.name = inc.name || null;
     S.sound = inc.sound !== false;
-    refresh();
+    S.upg = (inc.upg && typeof inc.upg === "object") ? inc.upg : {};
+    refresh(); updateShop();
   } catch (err) {}
 });
 
@@ -572,7 +671,104 @@ $("closeBtn").addEventListener("click", () => {
   window.close();
 });
 
+const shopList = $("shopList");
+for (const u of UPG) {
+  const row = document.createElement("div");
+  row.className = "upg";
+  row.id = "upg-" + u.id;
+  row.innerHTML = '<div class="upg-ico">' + u.ico + '</div>' +
+    '<div class="upg-info"><div class="upg-name">' + u.name + ' <span class="upg-lvl"></span></div>' +
+    '<div class="upg-eff"></div></div><button class="pill buy"></button>';
+  shopList.appendChild(row);
+  row.querySelector(".buy").addEventListener("click", () => buy(u));
+}
+function updateShop() {
+  for (const u of UPG) {
+    const l = lvl(u.id);
+    const row = $("upg-" + u.id);
+    row.querySelector(".upg-lvl").textContent = l ? "ур. " + l : "";
+    row.querySelector(".upg-eff").textContent = u.eff(l);
+    const b = row.querySelector(".buy");
+    if (l >= u.max) { b.textContent = "МАКС"; b.disabled = true; }
+    else { const c = cost(u, l); b.textContent = fmt(c) + " 🐾"; b.disabled = S.pets < c; }
+  }
+}
+function buy(u) {
+  const l = lvl(u.id);
+  if (l >= u.max) return;
+  const c = cost(u, l);
+  if (S.pets < c) return;
+  S.pets -= c;
+  S.upg[u.id] = l + 1;
+  play("treat");
+  squash.vel -= 3;
+  say("Куплено: " + u.name + " " + u.ico + " Теперь " + u.eff(l + 1) + "!");
+  const row = $("upg-" + u.id);
+  row.classList.add("bought");
+  setTimeout(() => row.classList.remove("bought"), 600);
+  refresh(); updateShop(); queueSave();
+}
+
+function exportCode() {
+  const payload = { v: 1, pets: S.pets, solved: S.solved, bestCombo: S.bestCombo,
+    name: S.name, sound: S.sound, upg: S.upg, t: Date.now() };
+  const bytes = new TextEncoder().encode(JSON.stringify(payload));
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return "SAYAN1." + btoa(bin);
+}
+function importCode(code) {
+  code = (code || "").trim();
+  if (!code.startsWith("SAYAN1.")) { say("Это не код Саяна 🙈"); return; }
+  try {
+    const bin = atob(code.slice(7));
+    const o = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, ch => ch.charCodeAt(0))));
+    if (o.v !== 1 || typeof o.pets !== "number" || !isFinite(o.pets)) throw 0;
+    S.pets = Math.max(0, o.pets);
+    S.solved = Math.max(0, Number(o.solved) || 0);
+    S.bestCombo = Math.max(0, Number(o.bestCombo) || 0);
+    S.name = typeof o.name === "string" ? o.name.slice(0, 40) : null;
+    S.sound = o.sound !== false;
+    S.upg = {};
+    if (o.upg && typeof o.upg === "object")
+      for (const u of UPG) S.upg[u.id] = Math.min(u.max, Math.max(0, Math.floor(Number(o.upg[u.id]) || 0)));
+    shownScore = S.pets;
+    hideQuiz();
+    refresh(); updateShop(); save();
+    say("Прогресс восстановлен! С возвращением" + (S.name ? ", " + S.name : "") + " 🐾");
+    play("levelup");
+  } catch (e) { say("Код не читается 🙈 Проверь, что скопирован целиком."); }
+}
+$("copySaveBtn").addEventListener("click", async () => {
+  const code = exportCode();
+  try {
+    await navigator.clipboard.writeText(code);
+    say("Код скопирован! На другом компьютере нажми 📥 и вставь его 💾");
+  } catch (e) {
+    prompt("Скопируй код сохранения (Ctrl+C) и вставь на другом компьютере через 📥:", code);
+  }
+});
+$("loadSaveBtn").addEventListener("click", () => {
+  const code = prompt("Вставь код сохранения с другого компьютера:");
+  if (code !== null) importCode(code);
+});
+
+let offlineMsg = null;
+if (S.t && passiveRate() > 0) {
+  const away = (Date.now() - S.t) / 1000;
+  if (away > 60) {
+    const gain = Math.floor(passiveRate() * Math.min(away, 7200) * .5);
+    if (gain > 0) {
+      S.pets += gain;
+      shownScore = S.pets;
+      offlineMsg = "Пока тебя не было, помощники намяли +" + fmt(gain) + " лапок 🐾";
+    }
+  }
+}
+
 refresh();
+updateShop();
+if (offlineMsg) say(offlineMsg);
 refreshPin();
 requestAnimationFrame(tick);
 </script>
