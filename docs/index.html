@@ -115,6 +115,7 @@
   <header class="row">
     <button class="title" id="titleBtn" title="Клик — подписаться своим именем">🐾 Кот Саян</button>
     <div class="spacer"></div>
+    <button class="pill icon" id="poseBtn" aria-label="Сменить позу" title="Сменить позу">🖼️</button>
     <button class="pill icon" id="soundBtn" aria-label="Звук">🔊</button>
     <button class="pill icon" id="resetBtn" aria-label="Начать заново" title="Начать заново (новый ученик)">🔄</button>
   </header>
@@ -262,12 +263,24 @@ function queueSave() {
   saveTimer = setTimeout(() => { saveTimer = 0; save(); }, 800);
 }
 
+const AWAKE_POSES = ["curious.png", "photo_window.jpg", "photo_cuddle.jpg", "photo_sink.jpg"];
+const SLEEP_POSES = ["sleep_cozy.png", "photo_nap.jpg", "photo_sofa.jpg", "photo_sill_nap.jpg"];
+let awakePose = 0, sleepPose = 0;
+let nextPoseAt = performance.now() / 1000 + 20;
+for (const f of AWAKE_POSES.concat(SLEEP_POSES)) {
+  const im = new Image();
+  im.src = "assets/sprites/" + f;
+}
+
 function setPose() {
   const now = performance.now() / 1000;
-  const src = sleeping ? "sleep_cozy" : now < zoomiesUntil ? "zoomies"
-    : now < wakePoseUntil ? "stretch" : "curious";
-  const want = "assets/sprites/" + src + ".png";
-  if ($("cat").getAttribute("src") !== want) $("cat").setAttribute("src", want);
+  const file = now < zoomiesUntil ? "zoomies.png" : now < wakePoseUntil ? "stretch.png"
+    : sleeping ? SLEEP_POSES[sleepPose] : AWAKE_POSES[awakePose];
+  const want = "assets/sprites/" + file;
+  if ($("cat").getAttribute("src") !== want) {
+    $("cat").setAttribute("src", want);
+    squash.vel -= 1.5;
+  }
 }
 
 function startZoomies(now) {
@@ -401,6 +414,11 @@ function tick(t) {
     tick.lastZzz = Math.floor(now);
     floatAtCat("Zzz", "var(--sub)");
   }
+  if (now > nextPoseAt) {
+    nextPoseAt = now + 20 + Math.random() * 15;
+    if (sleeping) sleepPose = (sleepPose + 1) % SLEEP_POSES.length;
+    else awakePose = (awakePose + 1) % AWAKE_POSES.length;
+  }
   if (!quiz && now > nextIdleQuiz) { nextIdleQuiz = now + 75; spawnQuiz(); }
   const cp = $("comboPill");
   if (combo >= 2 && now - lastPet <= COMBO_WINDOW) { cp.hidden = false; cp.textContent = "Комбо x" + combo; }
@@ -415,6 +433,14 @@ function tick(t) {
 
 $("catWrap").addEventListener("pointerdown", e => { e.preventDefault(); pet(); });
 $("quizBtn").addEventListener("click", spawnQuiz);
+$("poseBtn").addEventListener("click", () => {
+  const now = performance.now() / 1000;
+  if (sleeping) sleepPose = (sleepPose + 1) % SLEEP_POSES.length;
+  else awakePose = (awakePose + 1) % AWAKE_POSES.length;
+  nextPoseAt = now + 20 + Math.random() * 15;
+  initAudio();
+  tap();
+});
 $("quizClose").addEventListener("click", hideQuiz);
 [...$("quizOpts").children].forEach((b, i) => b.addEventListener("click", () => answer(i)));
 $("soundBtn").addEventListener("click", () => {
