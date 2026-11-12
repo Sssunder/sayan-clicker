@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Кот Саян — уютный кликер</title>
+<meta name="description" content="Уютный кликер с котом Саяном и математическими задачками. Кликай по коту, решай задачки, копи лапки — прямо на доске или в браузере.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<style>
+  :root {
+    --bg: #F5F5F7; --card: #FFFFFF; --text: #1D1D1F; --sub: #86868B;
+    --hair: rgba(0,0,0,.07); --pill: #E8E8ED; --pill-text: #1D1D1F;
+    --accent: #0A84FF; --sage: #34C759; --amber: #FF9F0A; --shadow: 0 8px 24px rgba(0,0,0,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0B0B0F; --card: #1C1C1E; --text: #F5F5F7; --sub: #98989D;
+      --hair: rgba(255,255,255,.09); --pill: #2C2C2E; --pill-text: #F5F5F7;
+      --shadow: 0 8px 24px rgba(0,0,0,.45);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 100%/1.45 system-ui, "Segoe UI Variable Text", "Segoe UI", sans-serif;
+    display: flex; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app { width: min(430px, 100%); padding: 12px 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .spacer { flex: 1; }
+  .card {
+    background: var(--card); border: 1px solid var(--hair); border-radius: 20px;
+    box-shadow: var(--shadow); padding: 14px;
+  }
+  button {
+    font: inherit; color: var(--pill-text); background: var(--pill);
+    border: 0; border-radius: 999px; cursor: pointer;
+    transition: transform .1s ease-out, filter .1s ease-out;
+    touch-action: manipulation; user-select: none;
+  }
+  button:active { transform: scale(.95); }
+  .pill { padding: 7px 14px; font-size: 13px; font-weight: 600; }
+  .pill.icon { padding: 7px 11px; font-size: 14px; }
+  .title {
+    background: none; padding: 2px 4px; font-size: 19px; font-weight: 700;
+    letter-spacing: -.02em; color: var(--text);
+  }
+  .nameline { font-size: 12px; color: var(--sub); padding: 0 6px; margin-top: -4px; }
+  .stage { position: relative; overflow: hidden; padding: 10px 12px 12px; min-height: 250px;
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
+  .bubble {
+    align-self: stretch; background: var(--pill); border-radius: 14px;
+    padding: 8px 12px; font-size: 13px; font-weight: 500; min-height: 38px;
+    display: flex; align-items: center;
+  }
+  #catWrap { position: relative; width: min(240px, 68vw); aspect-ratio: 1; cursor: pointer;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none; will-change: transform; }
+  #catWrap::before {
+    content: ""; position: absolute; inset: -12%; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(10,132,255,.14), transparent 70%);
+  }
+  #cat { width: 100%; height: 100%; object-fit: contain; border-radius: 24px;
+    pointer-events: none; display: block; }
+  .hint { font-size: 11.5px; color: var(--sub); text-align: center; }
+  #fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .float {
+    position: absolute; font-weight: 700; font-size: 17px; color: var(--accent);
+    transform: translate(-50%, 0); opacity: 0; letter-spacing: -.01em;
+    text-shadow: 0 1px 0 var(--card);
+  }
+  .quiz { display: flex; flex-direction: column; gap: 8px; }
+  .quiz[hidden] { display: none; }
+  .quiz-title { font-size: 12.5px; font-weight: 700; color: var(--sage); }
+  .quiz-close { padding: 2px 10px; font-size: 14px; }
+  #quizQ { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+  .opts { display: flex; gap: 8px; }
+  .opts button {
+    flex: 1; padding: 9px 6px; border-radius: 12px; font-weight: 600; font-size: 14px;
+    background: color-mix(in srgb, var(--accent) 14%, var(--card)); color: var(--accent);
+  }
+  .opts button:disabled { opacity: .55; cursor: default; }
+  .opts button.right { background: var(--sage); color: #fff; opacity: 1; }
+  .opts button.wrong { background: var(--amber); color: #fff; opacity: 1; }
+  #quizFeedback { font-size: 12.5px; font-weight: 600; color: var(--sub); }
+  #quizFeedback[hidden] { display: none; }
+  .score-big { display: flex; align-items: baseline; gap: 7px; }
+  #score { font-size: 34px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  .unit { font-size: 13px; color: var(--sub); font-weight: 600; }
+  .combo { background: color-mix(in srgb, var(--amber) 18%, var(--card)); color: var(--amber); }
+  .combo[hidden] { display: none; }
+  .level { font-size: 12px; font-weight: 600; color: var(--sage); margin-top: 6px; }
+  .level .nums { color: var(--sub); font-weight: 500; }
+  .bar { height: 6px; border-radius: 3px; background: var(--pill); overflow: hidden; margin-top: 5px; }
+  .bar > div { height: 100%; width: 0; border-radius: 3px; background: var(--accent); }
+  .energy { margin-top: 9px; font-size: 11.5px; font-weight: 600; color: var(--sub); }
+  .energy .bar { flex: 1; margin: 0; height: 5px; }
+  .energy .bar > div { background: var(--amber); }
+  #solved { color: var(--sage); }
+  .foot { font-size: 11px; color: var(--sub); text-align: center; }
+  @media (max-width: 340px) {
+    .pill { padding: 6px 10px; font-size: 12px; }
+    #score { font-size: 28px; }
+    .opts { flex-wrap: wrap; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    button { transition: none; }
+    button:active { transform: none; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="row">
+    <button class="title" id="titleBtn" title="Клик — подписаться своим именем">🐾 Кот Саян</button>
+    <div class="spacer"></div>
+    <button class="pill icon" id="soundBtn" aria-label="Звук">🔊</button>
+    <button class="pill icon" id="resetBtn" aria-label="Начать заново" title="Начать заново (новый ученик)">🔄</button>
+  </header>
+  <div class="nameline" id="nameLine" hidden></div>
+
+  <section class="card stage" id="stage" aria-label="Кот Саян">
+    <div class="bubble" id="bubble">Кликни по Саяну или нажми Пробел, чтобы погладить</div>
+    <div id="catWrap"><img id="cat" src="assets/sprites/curious.png" alt="Кот Саян"></div>
+    <div id="fx"></div>
+    <div class="hint">Пробел — погладить · Q — задачка · 1/2/3 — ответ</div>
+  </section>
+
+  <section class="card quiz" id="quizCard" hidden aria-label="Задачка">
+    <div class="row">
+      <span class="quiz-title" id="quizTitle">📐 Быстрая задачка на +30 лапок</span>
+      <div class="spacer"></div>
+      <button class="quiz-close" id="quizClose" aria-label="Закрыть задачку">✕</button>
+    </div>
+    <div id="quizQ"></div>
+    <div class="opts" id="quizOpts">
+      <button></button><button></button><button></button>
+    </div>
+    <div id="quizFeedback" hidden></div>
+  </section>
+
+  <section class="card" aria-label="Прогресс">
+    <div class="row">
+      <div class="score-big"><span id="score">0</span><span class="unit" id="unit">лапок</span></div>
+      <div class="spacer"></div>
+      <button class="pill" id="quizBtn" title="Попросить задачку сейчас (Q)">📐 Задачка</button>
+      <span class="pill combo" id="comboPill" hidden>Комбо x2</span>
+    </div>
+    <div class="row level"><span id="levelTitle"></span><div class="spacer"></div><span class="nums" id="levelNums"></span></div>
+    <div class="bar"><div id="levelBar"></div></div>
+    <div class="row energy">
+      <span>⚡</span>
+      <div class="bar"><div id="energyBar"></div></div>
+      <div class="spacer"></div>
+      <span id="solved" title="Решено задачек">📐 0</span>
+      <span id="mood">👀</span>
+    </div>
+  </section>
+
+  <footer class="foot">Саян живёт прямо на доске · прогресс сохраняется в этом браузере</footer>
+</main>
+
+<script src="quiz-data.js"></script>
+<script>
+"use strict";
+const D = window.SAYAN_DATA;
+const $ = id => document.getElementById(id);
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const SAVE_KEY = "sayan_web_save_v1";
+const store = {
+  get() { try { return localStorage.getItem(SAVE_KEY); } catch (e) { return null; } },
+  set(v) { try { localStorage.setItem(SAVE_KEY, v); } catch (e) {} },
+};
+const S = Object.assign({ pets: 0, solved: 0, bestCombo: 0, name: null, sound: true },
+  JSON.parse(store.get() || "{}"));
+
+const COMBO_WINDOW = 1.4, QUIZ_REWARD = D.quizReward, SLEEP_IDLE = 18;
+const ZOOMIES_SECONDS = 6, ZOOMIES_COOLDOWN = 35, QUIZ_CADENCE = 26;
+
+let combo = 0, lastPet = -99, energy = 0, clicks = 0;
+let zoomiesUntil = 0, zoomiesCooldownUntil = 0, sleeping = false, wakePoseUntil = 0;
+let lastActivity = performance.now() / 1000, nextIdleQuiz = lastActivity + 75;
+let quiz = null, reviewing = false, quizCursor = 0, reviewTimer = 0;
+let shownScore = S.pets, saveTimer = 0;
+
+const squash = { v: 0, vel: 0 };
+function springStep(s, dt) {
+  const w = 2 * Math.PI / 0.32, z = 0.55;
+  const a = -w * w * s.v - 2 * z * w * s.vel;
+  s.vel += a * dt; s.v += s.vel * dt;
+}
+
+const audio = { ctx: null, buffers: {} };
+function initAudio() {
+  if (audio.ctx || !S.sound) return;
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return;
+  audio.ctx = new Ctx();
+  for (const n of ["tap1","tap2","tap3","meow","meow2","treat","levelup","zoomies"]) {
+    fetch("assets/sounds/" + n + ".wav").then(r => r.arrayBuffer())
+      .then(b => audio.ctx.decodeAudioData(b))
+      .then(buf => { audio.buffers[n] = buf; }).catch(() => {});
+  }
+}
+function play(name) {
+  if (!S.sound || !audio.ctx || !audio.buffers[name]) return;
+  if (audio.ctx.state === "suspended") audio.ctx.resume();
+  const src = audio.ctx.createBufferSource();
+  src.buffer = audio.buffers[name];
+  src.connect(audio.ctx.destination);
+  src.start();
+}
+const tap = () => play(Math.random() < 0.14 ? (Math.random() < .5 ? "meow" : "meow2")
+  : "tap" + (1 + Math.floor(Math.random() * 3)));
+
+function plural(n) {
+  const a = n % 10, b = n % 100;
+  if (a === 1 && b !== 11) return "лапка";
+  if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return "лапки";
+  return "лапок";
+}
+function levelInfo(count) {
+  let i = 0;
+  for (let k = 0; k < D.levels.length; k++) if (count >= D.levels[k][0]) i = k;
+  const [th, title] = D.levels[i];
+  const next = D.levels[i + 1] || null;
+  const ratio = next ? Math.min(1, Math.max(0, (count - th) / (next[0] - th))) : 1;
+  return { i, title, th, next, ratio };
+}
+function say(text) { $("bubble").textContent = text; }
+
+function floatText(text, x, y, color) {
+  const el = document.createElement("span");
+  el.className = "float";
+  el.textContent = text;
+  if (color) el.style.color = color;
+  el.style.left = x + "px"; el.style.top = y + "px";
+  $("fx").appendChild(el);
+  const t0 = performance.now();
+  (function anim(t) {
+    const p = (t - t0) / 900;
+    if (p >= 1) { el.remove(); return; }
+    el.style.opacity = String(p < .15 ? p / .15 : 1 - (p - .15) / .85);
+    el.style.transform = `translate(-50%, ${reduced ? 0 : -46 * p}px)`;
+    requestAnimationFrame(anim);
+  })(t0);
+}
+function floatAtCat(text, color) {
+  const stage = $("stage").getBoundingClientRect();
+  const cat = $("catWrap").getBoundingClientRect();
+  floatText(text, cat.left - stage.left + cat.width * (0.3 + Math.random() * .4),
+    cat.top - stage.top + cat.height * .25, color);
+}
+
+function save() {
+  store.set(JSON.stringify(S));
+}
+function queueSave() {
+  if (saveTimer) return;
+  saveTimer = setTimeout(() => { saveTimer = 0; save(); }, 800);
+}
+
+function setPose() {
+  const now = performance.now() / 1000;
+  const src = sleeping ? "sleep_cozy" : now < zoomiesUntil ? "zoomies"
+    : now < wakePoseUntil ? "stretch" : "curious";
+  const want = "assets/sprites/" + src + ".png";
+  if ($("cat").getAttribute("src") !== want) $("cat").setAttribute("src", want);
+}
+
+function startZoomies(now) {
+  zoomiesUntil = now + ZOOMIES_SECONDS;
+  zoomiesCooldownUntil = now + ZOOMIES_SECONDS + ZOOMIES_COOLDOWN;
+  energy = 100;
+  say("ТЫГЫДЫК! ⚡ Клики дают ×5 лапок!");
+  play("zoomies");
+}
+
+function pet() {
+  const now = performance.now() / 1000;
+  lastActivity = now; nextIdleQuiz = now + 75;
+  initAudio();
+  let gain = 1;
+  if (sleeping) {
+    sleeping = false; wakePoseUntil = now + 1.5; gain += 5;
+    say((S.name ? S.name + ", " : "") + "Саян проснулся! +5 лапок за побудку 🌤");
+    play("meow");
+  }
+  combo = (now - lastPet <= COMBO_WINDOW) ? combo + 1 : 1;
+  lastPet = now;
+  S.bestCombo = Math.max(S.bestCombo, combo);
+  if (combo >= 10) gain += 2; else if (combo >= 5) gain += 1;
+  if (now < zoomiesUntil) gain *= 5;
+  const before = levelInfo(S.pets).i;
+  S.pets += gain;
+  clicks++;
+  if (!sleeping) {
+    energy = Math.min(100, energy + 2);
+    if (energy >= 100 && now >= zoomiesCooldownUntil) startZoomies(now);
+  }
+  squash.vel -= 5.5;
+  floatAtCat("+" + gain);
+  tap();
+  const after = levelInfo(S.pets);
+  if (after.i > before) { say("Новый уровень: " + after.title + "! 🎉"); play("levelup"); }
+  else if (D.milestones[String(S.pets)]) say(D.milestones[String(S.pets)]);
+  else if (combo === 5) say("Комбо x5! Саян мурчит от восторга 🔥");
+  if (clicks % QUIZ_CADENCE === 0 && !quiz) spawnQuiz();
+  refresh();
+  queueSave();
+}
+
+function spawnQuiz() {
+  if (quiz) return;
+  quiz = D.quiz[quizCursor++ % D.quiz.length];
+  reviewing = false;
+  $("quizQ").textContent = quiz.q;
+  const btns = $("quizOpts").children;
+  for (let i = 0; i < 3; i++) {
+    btns[i].textContent = quiz.o[i];
+    btns[i].disabled = false;
+    btns[i].className = "";
+    btns[i].title = "Ответ " + (i + 1) + " — клавиша " + (i + 1);
+  }
+  $("quizFeedback").hidden = true;
+  $("quizCard").hidden = false;
+  play("treat");
+}
+function hideQuiz() {
+  quiz = null; reviewing = false;
+  clearTimeout(reviewTimer);
+  $("quizCard").hidden = true;
+}
+function answer(i) {
+  if (!quiz || reviewing) return;
+  reviewing = true;
+  const btns = $("quizOpts").children;
+  for (const b of btns) b.disabled = true;
+  const fb = $("quizFeedback");
+  fb.hidden = false;
+  if (i === quiz.c) {
+    btns[i].className = "right";
+    S.pets += QUIZ_REWARD; S.solved++;
+    fb.textContent = "Верно! +" + QUIZ_REWARD + " лапок 🐾";
+    play("treat");
+    floatAtCat("+" + QUIZ_REWARD, "var(--sage)");
+    reviewTimer = setTimeout(hideQuiz, 1200);
+  } else {
+    btns[i].className = "wrong";
+    btns[quiz.c].className = "right";
+    fb.textContent = "Не совсем. Верно: " + quiz.o[quiz.c] + ". " + quiz.e;
+    play("meow2");
+    reviewTimer = setTimeout(hideQuiz, 3200);
+  }
+  refresh();
+  queueSave();
+}
+
+function refresh() {
+  const li = levelInfo(S.pets);
+  $("levelTitle").textContent = "Ур. " + (li.i + 1) + " · " + li.title;
+  $("levelNums").textContent = li.next ? S.pets + " / " + li.next[0] : S.pets + " · максимум";
+  $("levelBar").style.width = (li.ratio * 100).toFixed(1) + "%";
+  $("solved").textContent = "📐 " + S.solved;
+  $("unit").textContent = plural(S.pets);
+  $("mood").textContent = sleeping ? "😴" : performance.now() / 1000 < zoomiesUntil ? "⚡"
+    : combo >= 5 ? "😻" : "👀";
+  $("nameLine").hidden = !S.name;
+  if (S.name) $("nameLine").textContent = "👋 " + S.name;
+  $("soundBtn").textContent = S.sound ? "🔊" : "🔇";
+}
+
+let lastT = performance.now();
+function tick(t) {
+  const dt = Math.min(.05, (t - lastT) / 1000); lastT = t;
+  const now = t / 1000;
+  springStep(squash, dt);
+  const wrap = $("catWrap");
+  let x = 0, tilt = 0, bob = 0;
+  if (!reduced) {
+    bob = Math.sin(now * 1.7) * 3;
+    if (now < zoomiesUntil) {
+      const stageW = $("stage").clientWidth;
+      const amp = Math.max(0, stageW / 2 - wrap.offsetWidth / 2 - 10);
+      x = Math.sin(now * 5.2) * amp;
+      tilt = Math.cos(now * 5.2) * 7;
+      energy = Math.max(0, 100 * (zoomiesUntil - now) / ZOOMIES_SECONDS);
+    } else if (energy > 0 && now >= zoomiesUntil) {
+      energy = Math.max(0, energy - dt * 4);
+    }
+  }
+  const sy = 1 - .12 * squash.v, sx = 1 + .10 * squash.v;
+  wrap.style.transform = `translate(${x}px, ${bob}px) rotate(${tilt}deg) scale(${sx}, ${sy})`;
+  if (!sleeping && now - lastActivity > SLEEP_IDLE) {
+    sleeping = true;
+    say("Zzz… погладь, чтобы разбудить (+5) 💤");
+  }
+  if (sleeping && Math.floor(now) % 3 === 0 && Math.floor(now) !== tick.lastZzz) {
+    tick.lastZzz = Math.floor(now);
+    floatAtCat("Zzz", "var(--sub)");
+  }
+  if (!quiz && now > nextIdleQuiz) { nextIdleQuiz = now + 75; spawnQuiz(); }
+  const cp = $("comboPill");
+  if (combo >= 2 && now - lastPet <= COMBO_WINDOW) { cp.hidden = false; cp.textContent = "Комбо x" + combo; }
+  else cp.hidden = true;
+  shownScore += (S.pets - shownScore) * Math.min(1, dt * 10);
+  if (Math.abs(S.pets - shownScore) < .6) shownScore = S.pets;
+  $("score").textContent = String(Math.round(shownScore));
+  $("energyBar").style.width = energy.toFixed(0) + "%";
+  setPose();
+  requestAnimationFrame(tick);
+}
+
+$("catWrap").addEventListener("pointerdown", e => { e.preventDefault(); pet(); });
+$("quizBtn").addEventListener("click", spawnQuiz);
+$("quizClose").addEventListener("click", hideQuiz);
+[...$("quizOpts").children].forEach((b, i) => b.addEventListener("click", () => answer(i)));
+$("soundBtn").addEventListener("click", () => {
+  S.sound = !S.sound;
+  if (S.sound) initAudio();
+  refresh(); queueSave();
+});
+$("resetBtn").addEventListener("click", () => {
+  if (!confirm("Начать заново? Лапки, уровень и задачки обнулятся.\nИмя и звук останутся.")) return;
+  S.pets = 0; S.solved = 0; S.bestCombo = 0;
+  combo = 0; energy = 0; clicks = 0; shownScore = 0; sleeping = false;
+  hideQuiz();
+  say("Новый ученик за партой! Мяу — начнём с первой лапки! 🐾");
+  play("meow");
+  refresh(); save();
+});
+$("titleBtn").addEventListener("click", () => {
+  const name = prompt("Как тебя зовут? Имя появится под заголовком.", S.name || "");
+  if (name === null) return;
+  S.name = name.trim().slice(0, 40) || null;
+  say(S.name ? "Теперь Саян знает тебя: " + S.name + " 🏅" : "Кот Саян");
+  refresh(); queueSave();
+});
+window.addEventListener("keydown", e => {
+  if (e.repeat) return;
+  if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); pet(); }
+  else if (e.code === "KeyQ") spawnQuiz();
+  else if (e.code === "Digit1") answer(0);
+  else if (e.code === "Digit2") answer(1);
+  else if (e.code === "Digit3") answer(2);
+});
+window.addEventListener("beforeunload", save);
+document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
+
+refresh();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
