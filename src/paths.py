@@ -23,15 +23,30 @@ def get_resource_path(relative_path: str) -> Path:
 
 
 def get_app_data_dir() -> Path:
-    """Return %APPDATA%\\SayanClicker (creating it cleanly if missing)."""
+    """Return a writable %APPDATA%\\SayanClicker-style dir, falling back when the
+    OS/security software denies folder creation under the user profile."""
+    candidates: list[Path] = []
     appdata = os.environ.get("APPDATA", "").strip()
     if appdata:
-        base_dir = Path(appdata)
-    else:
-        base_dir = Path.home() / "AppData" / "Roaming"
-    app_dir = base_dir / APP_FOLDER_NAME
-    app_dir.mkdir(parents=True, exist_ok=True)
-    return app_dir
+        candidates.append(Path(appdata))
+    local = os.environ.get("LOCALAPPDATA", "").strip()
+    if local:
+        candidates.append(Path(local))
+    candidates.append(Path.home() / "AppData" / "Roaming")
+    if getattr(sys, "frozen", False):
+        candidates.append(Path(sys.executable).resolve().parent.parent)
+    candidates.append(get_project_root())
+    for base in candidates:
+        app_dir = base / APP_FOLDER_NAME
+        try:
+            app_dir.mkdir(parents=True, exist_ok=True)
+            probe = app_dir / ".write_probe"
+            probe.write_bytes(b"sayan")
+            probe.unlink()
+            return app_dir
+        except OSError:
+            continue
+    return candidates[0] / APP_FOLDER_NAME
 
 
 def get_save_path() -> Path:
@@ -44,3 +59,10 @@ def get_custom_photos_dir() -> Path:
     photos_dir = get_app_data_dir() / "custom_photos"
     photos_dir.mkdir(parents=True, exist_ok=True)
     return photos_dir
+
+
+def get_cards_dir() -> Path:
+    """Return %APPDATA%\\SayanClicker\\cards (creating it if missing)."""
+    cards_dir = get_app_data_dir() / "cards"
+    cards_dir.mkdir(parents=True, exist_ok=True)
+    return cards_dir

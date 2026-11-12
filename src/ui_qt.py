@@ -9,13 +9,15 @@ import threading
 import time
 import traceback
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from PIL import Image
-from PySide6.QtCore import Qt, QTimer, QRectF, QPointF, QSize, Signal
+from PySide6.QtCore import Qt, QTimer, QRectF, QPointF, QSize, QUrl, Signal
 from PySide6.QtGui import (
     QColor,
+    QDesktopServices,
     QFont,
     QFontMetrics,
     QIcon,
@@ -33,7 +35,10 @@ from PySide6.QtWidgets import (
     QFrame,
     QGraphicsDropShadowEffect,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
+    QMenu,
+    QMessageBox,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -48,7 +53,7 @@ from .game_state import (
     QuizAnswerResult,
     SayanGameState,
 )
-from .paths import get_resource_path
+from .paths import get_cards_dir, get_resource_path
 from .sprites import create_soft_shadow, prepare_sprite_rgba
 from .storage import import_custom_photo, load_config, save_config
 from .theme import ThemePalette, get_theme
@@ -477,6 +482,10 @@ class SayanClickerApp(QWidget):
 
         QShortcut(QKeySequence(Qt.Key_Space), self, activated=self._hotkey_pet)
         QShortcut(QKeySequence(Qt.Key_Return), self, activated=self._hotkey_pet)
+        QShortcut(QKeySequence("Q"), self, activated=self._request_quiz)
+        QShortcut(QKeySequence("Й"), self, activated=self._request_quiz)
+        for i in range(3):
+            QShortcut(QKeySequence(str(i + 1)), self, activated=lambda i=i: self._answer_quiz(i))
 
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
@@ -542,6 +551,7 @@ class SayanClickerApp(QWidget):
         root = QVBoxLayout(self)
         root.setContentsMargins(14, 10, 14, 12)
         root.setSpacing(10)
+        self._root = root
 
         header = QWidget()
         hl = QHBoxLayout(header)
@@ -549,15 +559,21 @@ class SayanClickerApp(QWidget):
         hl.setSpacing(6)
         self.title_label = QLabel("🐾 Кот Саян")
         self.title_label.setFont(self.ui_font(13, "demibold"))
+        self.title_label.setCursor(Qt.PointingHandCursor)
+        self.title_label.setToolTip("Клик — подписать карточки своим именем")
+        self.title_label.mousePressEvent = lambda ev: self._rename_player()
         hl.addWidget(self.title_label)
         hl.addStretch(1)
         self.sound_btn = PillButton(self, "🔊", checkable=True)
         self.sound_btn.clicked.connect(self.toggle_sound)
+        self.share_btn = PillButton(self, "🏅")
+        self.share_btn.setToolTip("Сохранить карточку достижения (PNG) для доски или чата")
+        self.share_btn.clicked.connect(self.export_card)
         self.topmost_btn = PillButton(self, "📌 Поверх", checkable=True)
         self.topmost_btn.clicked.connect(self.toggle_always_on_top)
         self.compact_btn = PillButton(self, "🪟 Компакт")
         self.compact_btn.clicked.connect(self.toggle_compact_mode)
-        for b in (self.sound_btn, self.topmost_btn, self.compact_btn):
+        for b in (self.sound_btn, self.share_btn, self.topmost_btn, self.compact_btn):
             hl.addWidget(b)
         header.mousePressEvent = self._header_press
         header.mouseMoveEvent = self._header_move
@@ -598,10 +614,19 @@ class SayanClickerApp(QWidget):
         self.quiz_btns = []
         for i in range(3):
             b = PillButton(self, "", role="accent")
+            b.setToolTip(f"Ответ {i + 1} — клавиша {i + 1}")
             b.clicked.connect(lambda i=i: self._answer_quiz(i))
             qrow.addWidget(b, 1)
             self.quiz_btns.append(b)
         ql.addLayout(qrow)
+        self.quiz_feedback = QLabel("")
+        self.quiz_feedback.setWordWrap(True)
+        self.quiz_feedback.setFont(self.ui_font(9, "demibold"))
+        self.quiz_feedback.hide()
+        ql.addWidget(self.quiz_feedback)
+        self._quiz_review_timer = QTimer(self)
+        self._quiz_review_timer.setSingleShot(True)
+        self._quiz_review_timer.timeout.connect(self._dismiss_quiz)
         root.addWidget(self.quiz_card)
         self.quiz_card.hide()
 
@@ -617,6 +642,10 @@ class SayanClickerApp(QWidget):
         self.paws_caption.setFont(self.ui_font(10, "demibold"))
         score_row.addWidget(self.paws_caption)
         score_row.addStretch(1)
+        self.quiz_request_btn = PillButton(self, "📐 Задачка")
+        self.quiz_request_btn.setToolTip("Попросить задачку сейчас (Q)")
+        self.quiz_request_btn.clicked.connect(self._request_quiz)
+        score_row.addWidget(self.quiz_request_btn)
         self.combo_pill = ComboPill(self)
         score_row.addWidget(self.combo_pill)
         sl.addLayout(score_row)
@@ -641,12 +670,18 @@ class SayanClickerApp(QWidget):
         self.energy_lbl.setFont(self.ui_font(8, "demibold"))
         energy_row.addWidget(self.energy_lbl)
         energy_row.addStretch(1)
+        self.solved_lbl = QLabel("📐 0")
+        self.solved_lbl.setFont(self.ui_font(8, "demibold"))
+        self.solved_lbl.setToolTip("Решено задачек")
+        energy_row.addWidget(self.solved_lbl)
         self.mood_lbl = QLabel("")
         self.mood_lbl.setFont(self.ui_font(8))
         energy_row.addWidget(self.mood_lbl)
         dl.addLayout(energy_row)
         sl.addWidget(self.details)
         root.addWidget(self.stats_card)
+        self.stats_card.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.stats_card.customContextMenuRequested.connect(self._stats_menu)
 
         footer = QHBoxLayout()
         footer.setSpacing(6)
@@ -692,6 +727,7 @@ class SayanClickerApp(QWidget):
     def _apply_mode_layout(self) -> None:
         if self.compact_mode:
             self.setFixedSize(BASE_COMPACT_WIDTH, BASE_COMPACT_HEIGHT)
+            self._root.setSpacing(6)
             self.title_label.hide()
             self.details.hide()
             for i in range(self._footer.count()):
@@ -700,10 +736,17 @@ class SayanClickerApp(QWidget):
                     w.hide()
             self.bubble_label.setFont(self.ui_font(8, "demibold"))
             self.score_label.setFont(self.ui_font(18, "bold"))
+            self.quiz_request_btn.set_text("📐")
+            self.quiz_title.hide()
+            self.quiz_question.setFont(self.ui_font(9, "bold"))
+            self.quiz_feedback.setFont(self.ui_font(8, "demibold"))
+            self.quiz_card.layout().setContentsMargins(10, 6, 10, 8)
+            self.quiz_card.layout().setSpacing(6)
             self.compact_btn.set_text("⛶")
             self.topmost_btn.set_text("📌")
         else:
             self.setFixedSize(BASE_NORMAL_WIDTH, BASE_NORMAL_HEIGHT)
+            self._root.setSpacing(10)
             self.title_label.show()
             self.details.show()
             for i in range(self._footer.count()):
@@ -712,6 +755,12 @@ class SayanClickerApp(QWidget):
                     w.show()
             self.bubble_label.setFont(self.ui_font(10, "demibold"))
             self.score_label.setFont(self.ui_font(26, "bold"))
+            self.quiz_request_btn.set_text("📐 Задачка")
+            self.quiz_title.show()
+            self.quiz_question.setFont(self.ui_font(11, "bold"))
+            self.quiz_feedback.setFont(self.ui_font(9, "demibold"))
+            self.quiz_card.layout().setContentsMargins(14, 10, 14, 12)
+            self.quiz_card.layout().setSpacing(8)
             self.compact_btn.set_text("🪟 Компакт")
             self.topmost_btn.set_text("📌 Поверх")
         self._sync_quiz_banner()
@@ -726,9 +775,11 @@ class SayanClickerApp(QWidget):
         self.level_lbl.setStyleSheet(f"color:{t.sage};")
         self.level_next_lbl.setStyleSheet(f"color:{t.text_muted};")
         self.energy_lbl.setStyleSheet(f"color:{t.gold};")
+        self.solved_lbl.setStyleSheet(f"color:{t.sage};")
         self.mood_lbl.setStyleSheet(f"color:{t.text_muted};")
         self.quiz_title.setStyleSheet(f"color:{t.sage};")
         self.quiz_question.setStyleSheet(f"color:{t.text_heading};")
+        self.quiz_feedback.setStyleSheet(f"color:{t.accent};")
         self.theme_btn.set_text("☀️ Уютный" if t.key == "cyber" else "🌙 Кибер-Кот")
         self.sound_btn.set_checked(self.sound.enabled)
         self.topmost_btn.set_checked(self.always_on_top)
@@ -792,6 +843,7 @@ class SayanClickerApp(QWidget):
         self.level_next_lbl.setText(f"{count} / {lvl.next_threshold}" if lvl.next_threshold is not None else "МАКС ★")
         self.level_bar.ratio = lvl.progress_ratio
         self.energy_lbl.setText("⚡ ТЫГЫДЫК АКТИВЕН!" if zoomies else f"⚡ Тыгыдык: {self.state.purr_energy}%")
+        self.solved_lbl.setText(f"📐 {self.state.quizzes_solved}")
         self.mood_lbl.setText(self._mood_russian_label())
         self.bubble_label.setText(self.state.current_quote)
         self.pose_btn.set_text("🐱 Вернуть Саяна" if self.state.active_photo_mode == "custom" else "🎭 Сменить позу")
@@ -799,12 +851,24 @@ class SayanClickerApp(QWidget):
 
     def _sync_quiz_banner(self) -> None:
         quiz = self.state.active_quiz
-        if quiz is None or self.compact_mode:
+        min_h = 100 if (self.compact_mode and quiz is not None) else 180
+        if self.stage.minimumHeight() != min_h:
+            self.stage.setMinimumHeight(min_h)
+        if quiz is None:
+            self._quiz_review_timer.stop()
+            self.quiz_feedback.hide()
+            for b in self.quiz_btns:
+                b.setEnabled(True)
             self.quiz_card.hide()
+            self.bubble_card.show()
             return
+        self._quiz_review_timer.stop()
+        self.quiz_feedback.hide()
         self.quiz_question.setText(quiz.question)
         for i, b in enumerate(self.quiz_btns):
+            b.setEnabled(True)
             b.set_text(quiz.options[i])
+        self.bubble_card.setVisible(not self.compact_mode)
         self.quiz_card.show()
 
     # --- interactions ---
@@ -850,20 +914,39 @@ class SayanClickerApp(QWidget):
         self._spawn_burst(x, y, f"+{res.points_gained}", "ням!")
         self._refresh_all_labels()
 
+    def _request_quiz(self) -> None:
+        if self.state.active_quiz is not None:
+            return
+        self.state.spawn_quiz()
+        self._dirty_save = True
+        self.sound.play("treat", cooldown_ms=100)
+        self._sync_quiz_banner()
+
     def _answer_quiz(self, i: int) -> None:
-        if self.state.active_quiz is None:
+        quiz = self.state.active_quiz
+        if quiz is None:
             return
         res: QuizAnswerResult = self.state.answer_quiz(i)
         self._dirty_save = True
         if res.correct:
             self.sound.play("levelup", cooldown_ms=80)
             self._spawn_burst(self.stage.width() / 2, self.stage.height() * 0.45, f"+{res.points_gained}", "пятёрка!")
+            self._sync_quiz_banner()
         else:
             self.sound.play("meow", cooldown_ms=80)
-        self._sync_quiz_banner()
+            for j, b in enumerate(self.quiz_btns):
+                mark = "✓ " if j == res.correct_index else ("✗ " if j == i else "")
+                b.set_text(mark + quiz.options[j])
+                b.setEnabled(False)
+            self.quiz_feedback.setText(
+                f"Правильный ответ: {quiz.options[res.correct_index]}. {res.explanation}".strip()
+            )
+            self.quiz_feedback.show()
+            self._quiz_review_timer.start(3200)
         self._refresh_all_labels()
 
     def _dismiss_quiz(self) -> None:
+        self._quiz_review_timer.stop()
         self.state.dismiss_quiz()
         self._sync_quiz_banner()
 
@@ -939,6 +1022,138 @@ class SayanClickerApp(QWidget):
         self._dirty_save = True
         self._apply_theme_colors()
         self._refresh_all_labels()
+
+    def build_card_image(self) -> QImage:
+        t = self.theme
+        W, H = 1080, 1350
+        img = QImage(W, H, QImage.Format_ARGB32)
+        p = QPainter(img)
+        p.setRenderHint(QPainter.Antialiasing, True)
+        p.setRenderHint(QPainter.TextAntialiasing, True)
+        p.setRenderHint(QPainter.SmoothPixmapTransform, True)
+
+        def font(px: int, bold: bool = False) -> QFont:
+            f = QFont(self.font().family())
+            f.setPixelSize(px)
+            f.setBold(bold)
+            return f
+
+        p.fillRect(img.rect(), QColor(t.bg_page))
+        p.setPen(QColor(t.border))
+        p.setBrush(QColor(t.bg_card))
+        p.drawRoundedRect(QRectF(40, 40, W - 80, H - 80), 48, 48)
+
+        p.setPen(QColor(t.text_heading))
+        p.setFont(font(64, True))
+        p.drawText(QRectF(80, 92, W - 160, 80), Qt.AlignLeft | Qt.AlignVCenter, "КОТ САЯН")
+        name = str(self.config.get("player_name") or "Мой Саян")
+        p.setPen(QColor(t.text_muted))
+        p.setFont(font(40))
+        name = QFontMetrics(p.font()).elidedText(name, Qt.ElideRight, W - 160)
+        p.drawText(QRectF(80, 176, W - 160, 56), Qt.AlignLeft | Qt.AlignVCenter, name)
+
+        halo = QRectF(W / 2 - 260, 260, 520, 520)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(t.stage_halo))
+        p.drawEllipse(halo)
+        sprite = self._sprite_pixmap().scaled(
+            440, 440, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+        p.drawPixmap(
+            QPointF(W / 2 - sprite.width() / 2, 260 + 260 - sprite.height() / 2), sprite
+        )
+
+        lvl = self.state.get_level_info()
+        p.setPen(QColor(t.text_heading))
+        p.setFont(font(120, True))
+        p.drawText(QRectF(80, 800, W - 160, 140), Qt.AlignCenter, str(self.state.pets_count))
+        p.setPen(QColor(t.text_muted))
+        p.setFont(font(40))
+        p.drawText(QRectF(80, 940, W - 160, 52), Qt.AlignCenter, self._plural_paws(self.state.pets_count))
+
+        badge = f"Ур. {lvl.index} • {lvl.title}"
+        p.setFont(font(36, True))
+        fm = QFontMetrics(p.font())
+        bw = min(W - 160, fm.horizontalAdvance(badge) + 80)
+        brect = QRectF(W / 2 - bw / 2, 1010, bw, 72)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(t.sage_light))
+        p.drawRoundedRect(brect, 36, 36)
+        p.setPen(QColor(t.sage))
+        p.drawText(brect, Qt.AlignCenter, badge)
+
+        p.setPen(QColor(t.gold))
+        p.setFont(font(36, True))
+        p.drawText(QRectF(80, 1104, W - 160, 48), Qt.AlignCenter, f"Лучшее комбо: x{self.state.best_combo}")
+        p.setPen(QColor(t.text_muted))
+        p.setFont(font(34))
+        p.drawText(QRectF(80, 1156, W - 160, 46), Qt.AlignCenter, datetime.now().strftime("%d.%m.%Y"))
+        p.setFont(font(30))
+        p.drawText(QRectF(80, 1236, W - 160, 44), Qt.AlignCenter, "github.com/Sssunder/sayan-clicker")
+        p.end()
+        return img
+
+    def _stats_menu(self, pos) -> None:
+        menu = QMenu(self)
+        reset_action = menu.addAction("🔄 Начать заново (новый ученик)")
+        chosen = menu.exec(self.stats_card.mapToGlobal(pos))
+        if chosen == reset_action:
+            self._confirm_reset()
+
+    def _confirm_reset(self) -> None:
+        answer = QMessageBox.question(
+            self,
+            "Начать заново?",
+            "Лапки, уровень, комбо и задачки обнулятся.\n"
+            "Имя, настройки и своё фото останутся.\n"
+            "Отменить это будет нельзя.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if answer != QMessageBox.Yes:
+            return
+        self.state.reset_progress()
+        self._particles.clear()
+        self._shown_score = 0.0
+        self._last_score_int = 0
+        self.score_label.setText("0")
+        self._dirty_save = True
+        self.sound.play("meow", cooldown_ms=100)
+        self._sync_quiz_banner()
+        self._refresh_all_labels()
+
+    def _rename_player(self) -> None:
+        current = str(self.config.get("player_name") or "")
+        name, ok = QInputDialog.getText(
+            self,
+            "Подпись карточки",
+            "Как тебя зовут? Имя попадёт на карточку достижения.",
+            text=current,
+        )
+        if not ok:
+            return
+        name = name.strip()[:40]
+        if not name:
+            return
+        self.config["player_name"] = name
+        self._dirty_save = True
+        self.state.current_quote = f"Теперь карточки подписаны: {name} 🏅"
+        self._refresh_all_labels()
+
+    def export_card(self, out_dir: Path | None = None, open_folder: bool = True) -> Path:
+        img = self.build_card_image()
+        directory = Path(out_dir) if out_dir is not None else get_cards_dir()
+        directory.mkdir(parents=True, exist_ok=True)
+        path = directory / f"sayan-card_{datetime.now():%Y-%m-%d_%H-%M-%S}.png"
+        img.save(str(path), "PNG")
+        if open_folder:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(directory)))
+        self.state.current_quote = "🏅 Карточка сохранена! Перетащи её на доску или в чат."
+        if not self.config.get("player_name"):
+            self.state.current_quote += " Клик по заголовку «Кот Саян» — подпишу твоим именем."
+        self.sound.play("treat", cooldown_ms=150)
+        self._refresh_all_labels()
+        return path
 
     def choose_custom_photo(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(

@@ -820,6 +820,29 @@ class SayanGameState:
         self._last_quiz_click = self.session_clicks
         return quiz
 
+    def reset_progress(self) -> None:
+        """Start a fresh run for a new student; keeps photo choice and settings."""
+        self.pets_count = 0
+        self.best_combo = 0
+        self.total_events_caught = 0
+        self.quizzes_solved = 0
+        self.unlocked_milestones = []
+        self.mood = "curious"
+        self.combo_streak = 0
+        self.purr_energy = 0
+        self.session_clicks = 0
+        self.last_pet_at = None
+        self.zoomies_until = None
+        self.last_zoomies_at = None
+        self.active_treat = None
+        self.active_quiz = None
+        self.current_quote = "Новый ученик за партой! Мяу — начнём с первой лапки! 🐾"
+        self._idle_anchor_at = None
+        self._last_treat_click = 0
+        self._last_quiz_click = 0
+        self._last_tick_event_at = None
+        self._sleep_cycle_idx = 0
+
     def dismiss_quiz(self) -> None:
         """Dismiss the active quiz without penalty."""
         self.active_quiz = None

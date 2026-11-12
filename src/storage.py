@@ -82,6 +82,10 @@ def sanitize_config(raw: Any) -> dict[str, Any]:
         stripped = custom_path.strip()
         clean["custom_photo_path"] = stripped or None
 
+    player_name = raw.get("player_name")
+    if isinstance(player_name, str):
+        clean["player_name"] = player_name.strip()[:40] or None
+
     milestones = raw.get("unlocked_milestones")
     if isinstance(milestones, list):
         clean["unlocked_milestones"] = sorted(

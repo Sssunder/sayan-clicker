@@ -46,7 +46,7 @@ class PathsTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as fake_home:
             with (
-                patch.dict(os.environ, {"APPDATA": ""}),
+                patch.dict(os.environ, {"APPDATA": "", "LOCALAPPDATA": ""}),
                 patch.object(Path, "home", return_value=Path(fake_home)),
             ):
                 fallback_dir = paths.get_app_data_dir()
