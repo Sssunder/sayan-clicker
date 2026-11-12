@@ -6,6 +6,7 @@
 <title>Кот Саян — уютный кликер</title>
 <meta name="description" content="Уютный кликер с котом Саяном и математическими задачками. Кликай по коту, решай задачки, копи лапки — прямо на доске или в браузере.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+<script>if (new URLSearchParams(location.search).has("popup")) document.documentElement.classList.add("popup");</script>
 <style>
   :root {
     --bg: #F5F5F7; --card: #FFFFFF; --text: #1D1D1F; --sub: #86868B;
@@ -99,6 +100,29 @@
   .energy .bar > div { background: var(--amber); }
   #solved { color: var(--sage); }
   .foot { font-size: 11px; color: var(--sub); text-align: center; }
+  html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--sub) 50%, transparent) transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--sub) 45%, transparent); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--sub); }
+  #pinBtn.active { background: color-mix(in srgb, var(--accent) 20%, var(--card)); color: var(--accent); }
+  #closeBtn { display: none; }
+  .popup .app { width: 100%; padding: 8px 8px 10px; gap: 8px; }
+  .popup .card { padding: 10px; border-radius: 16px; }
+  .popup .title { font-size: 16px; }
+  .popup .pill { padding: 5px 10px; font-size: 12px; }
+  .popup .pill.icon { padding: 5px 9px; font-size: 13px; }
+  .popup .nameline { font-size: 11px; }
+  .popup .stage { min-height: 0; padding: 8px 10px 10px; gap: 4px; }
+  .popup .bubble { min-height: 30px; padding: 5px 10px; font-size: 12px; border-radius: 12px; }
+  .popup #catWrap { width: min(168px, 54vw); }
+  .popup .hint, .popup .foot, .popup #pinBtn, .popup #resetBtn { display: none; }
+  .popup #closeBtn { display: inline-block; }
+  .popup #score { font-size: 26px; }
+  .popup .level { margin-top: 4px; }
+  .popup .energy { margin-top: 6px; }
+  .popup #quizQ { font-size: 14px; }
+  .popup .opts button { padding: 7px 5px; font-size: 13px; }
   @media (max-width: 340px) {
     .pill { padding: 6px 10px; font-size: 12px; }
     #score { font-size: 28px; }
@@ -116,8 +140,10 @@
     <button class="title" id="titleBtn" title="Клик — подписаться своим именем">🐾 Кот Саян</button>
     <div class="spacer"></div>
     <button class="pill icon" id="poseBtn" aria-label="Сменить позу" title="Сменить позу">🖼️</button>
+    <button class="pill icon" id="pinBtn" aria-label="Окошко поверх всех окон" aria-pressed="false" title="Открыть отдельное окошко поверх всех окон">📌</button>
     <button class="pill icon" id="soundBtn" aria-label="Звук">🔊</button>
     <button class="pill icon" id="resetBtn" aria-label="Начать заново" title="Начать заново (новый ученик)">🔄</button>
+    <button class="pill icon" id="closeBtn" aria-label="Закрыть окошко" title="Закрыть окошко">✕</button>
   </header>
   <div class="nameline" id="nameLine" hidden></div>
 
@@ -473,9 +499,81 @@ window.addEventListener("keydown", e => {
   else if (e.code === "Digit3") answer(2);
 });
 window.addEventListener("beforeunload", save);
+window.addEventListener("pagehide", save);
 document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
 
+window.addEventListener("storage", e => {
+  if (e.key !== SAVE_KEY || !e.newValue) return;
+  try {
+    const inc = JSON.parse(e.newValue);
+    S.pets = Number(inc.pets) || 0;
+    S.solved = Number(inc.solved) || 0;
+    S.bestCombo = Number(inc.bestCombo) || 0;
+    S.name = inc.name || null;
+    S.sound = inc.sound !== false;
+    refresh();
+  } catch (err) {}
+});
+
+const popupUrl = (() => {
+  const u = new URL(location.href);
+  u.hash = "";
+  u.searchParams.set("popup", "1");
+  return u.toString();
+})();
+let pipWin = null, popupWin = null, popupPoll = 0;
+function pinActive() { return !!(pipWin || (popupWin && !popupWin.closed)); }
+function refreshPin() {
+  const on = pinActive();
+  $("pinBtn").classList.toggle("active", on);
+  $("pinBtn").setAttribute("aria-pressed", String(on));
+  $("pinBtn").title = on ? "Закрыть окошко «поверх всех окон»" : "Открыть отдельное окошко поверх всех окон";
+}
+function stopPopupPoll() { if (popupPoll) { clearInterval(popupPoll); popupPoll = 0; } }
+async function togglePinned() {
+  initAudio();
+  if (pipWin) { pipWin.close(); pipWin = null; refreshPin(); return; }
+  if (popupWin && !popupWin.closed) { popupWin.close(); popupWin = null; stopPopupPoll(); refreshPin(); return; }
+  if ("documentPictureInPicture" in window) {
+    try {
+      pipWin = await documentPictureInPicture.requestWindow({ width: 340, height: 580 });
+      const doc = pipWin.document;
+      const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+      const st = doc.createElement("style");
+      st.textContent = "html,body{margin:0;height:100%;background:" + (dark ? "#0B0B0F" : "#F5F5F7") +
+        "}iframe{display:block;border:0;width:100%;height:100%}";
+      doc.head.appendChild(st);
+      const fr = doc.createElement("iframe");
+      fr.src = popupUrl;
+      fr.allow = "autoplay";
+      fr.title = "Кот Саян — окошко поверх всех окон";
+      doc.body.appendChild(fr);
+      pipWin.addEventListener("pagehide", () => { pipWin = null; refreshPin(); });
+      say("Саян теперь в окошке поверх всех окон 📌 Кликай прямо там!");
+      play("treat");
+      refreshPin();
+      return;
+    } catch (e) { pipWin = null; }
+  }
+  popupWin = window.open(popupUrl, "sayan_pinned", "width=360,height=620");
+  if (!popupWin) { say("Браузер не дал открыть окошко 🙏 Разреши всплывающие окна для этого сайта."); return; }
+  popupWin.focus();
+  stopPopupPoll();
+  popupPoll = setInterval(() => {
+    if (!popupWin || popupWin.closed) { popupWin = null; stopPopupPoll(); refreshPin(); }
+  }, 600);
+  say("Открылось отдельное окошко 📌 Держи его поверх урока — клики работают!");
+  refreshPin();
+}
+$("pinBtn").addEventListener("click", togglePinned);
+$("closeBtn").addEventListener("click", () => {
+  save();
+  try { window.top.close(); } catch (e) {}
+  window.close();
+});
+
 refresh();
+refreshPin();
 requestAnimationFrame(tick);
 </script>
 </body>
