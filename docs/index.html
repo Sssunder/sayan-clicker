@@ -106,6 +106,9 @@
   .opts button.wrong { background: var(--amber); color: #fff; opacity: 1; }
   #quizFeedback { font-size: 12.5px; font-weight: 600; color: var(--sub); }
   #quizFeedback[hidden] { display: none; }
+  #quizFeedback.ok { color: var(--sage); font-size: 14.5px; font-weight: 800; }
+  #quizFeedback.bad { color: var(--amber); }
+  .quiz-next { width: 100%; margin-top: 9px; padding: 10px; font-size: 14px; font-weight: 800; }
   .score-big { display: flex; align-items: baseline; gap: 7px; }
   #score { font-size: 34px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
   .unit { font-size: 13px; color: var(--sub); font-weight: 600; }
@@ -119,8 +122,8 @@
   .energy .bar { flex: 1; margin: 0; height: 5px; }
   .energy .bar > div { background: var(--amber); }
   #solved { color: var(--sage); }
-  .prestige { margin-top: 9px; font-size: 11.5px; font-weight: 600; color: var(--sub); }
-  .prestige .bar { flex: 1; margin: 0; height: 5px; }
+  .prestige { margin-top: 9px; font-size: 11.5px; font-weight: 600; color: var(--sub); flex-wrap: wrap; }
+  .prestige .bar { flex: 1; margin: 0; height: 5px; min-width: 40px; }
   .prestige .bar > div { background: linear-gradient(90deg, var(--amber), var(--rose)); }
   #livesPill { color: var(--rose); white-space: nowrap; }
   #prestigeBtn { font-size: 11.5px; padding: 6px 10px; white-space: nowrap;
@@ -233,8 +236,9 @@
   .sec.locked .sec-img img { filter: blur(10px) grayscale(1) brightness(.32); transform: scale(1.15); }
   .sec-lock { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
     color: #fff; font-size: 11px; font-weight: 700; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,.8); gap: 2px; }
-  .sec-lock .n { font-size: 15px; }
-  .sec-t { font-size: 10.5px; font-weight: 700; color: var(--sub); }
+  .sec-lock .n { font-size: 22px; }
+  .sec-t { font-size: 10.5px; font-weight: 700; color: var(--sub); display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center; line-height: 1.25; }
+  .sec-life { font-size: 9.5px; font-weight: 600; opacity: .9; }
   .sec.final:not(.locked) { outline: 2px solid var(--amber); outline-offset: -1px;
     box-shadow: 0 0 18px color-mix(in srgb, var(--amber) 45%, transparent); }
   .sec.final:not(.locked) .sec-t { color: var(--amber); }
@@ -255,6 +259,26 @@
   .popup .secret { max-height: 94vh; }
   .popup #secretGrid { gap: 6px; }
   .popup .sec-t { font-size: 9.5px; }
+  #gradeOverlay { position: fixed; inset: 0; z-index: 65; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.45); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); padding: 16px; }
+  #gradeOverlay[hidden] { display: none; }
+  .grade { width: min(430px, 100%); max-height: min(88vh, 720px); overflow: auto; animation: pop .25s ease-out; }
+  .grade-title { font-size: 13px; font-weight: 800; color: var(--sage); }
+  .grade-hint { font-size: 11.5px; color: var(--sub); margin-top: 6px; line-height: 1.4; }
+  #gradeGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .grade-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 4px;
+    border-radius: 14px; background: color-mix(in srgb, var(--pill) 55%, var(--card)); text-align: center; }
+  .grade-cell .n { font-size: 19px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .grade-cell .lbl { font-size: 10.5px; font-weight: 700; color: var(--sub); }
+  .grade-cell .topic { font-size: 9px; color: var(--sub); opacity: .85; line-height: 1.2; }
+  .grade-cell.sel { outline: 2px solid var(--accent); outline-offset: -1px;
+    background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
+  .grade-mix { width: 100%; margin-top: 10px; font-size: 12px; }
+  .grade-mix.sel { background: color-mix(in srgb, var(--accent) 18%, var(--card)); color: var(--accent); }
+  .grade-cell:disabled { opacity: .45; cursor: default; }
+  .grade-mix:disabled { opacity: .5; cursor: default; }
+  #gradeBtn { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  .popup .grade { max-height: 92vh; }
   @media (max-width: 340px) {
     .pill { padding: 6px 10px; font-size: 12px; }
     .pill.icon { padding: 6px 8px; font-size: 12px; }
@@ -290,7 +314,7 @@
     <div class="bubble" id="bubble">Кликни по Саяну или нажми Пробел, чтобы погладить</div>
     <div id="catWrap"><img id="cat" src="assets/sprites/curious.png" alt="Кот Саян"></div>
     <div id="fx"></div>
-    <div class="hint">Пробел — погладить · Q — задачка · H — подсказка · 1/2/3 — ответ</div>
+    <div class="hint" id="ctrlHint">Пробел — погладить · Q — задачка · H — подсказка · 1/2/3 — ответ</div>
   </section>
 
   <section class="card quiz" id="quizCard" hidden aria-label="Задачка">
@@ -306,12 +330,14 @@
       <button></button><button></button><button></button>
     </div>
     <div id="quizFeedback" hidden></div>
+    <button class="pill quiz-next" id="quizNext" hidden>Следующая задачка →</button>
   </section>
 
   <section class="card" aria-label="Прогресс">
     <div class="row wrap">
       <div class="score-big"><span id="score">0</span><span class="unit" id="unit">лапок</span></div>
       <div class="spacer"></div>
+      <button class="pill" id="gradeBtn" title="Класс ученика. Смена класса — долгое нажатие (для учителя)">🎓 микс</button>
       <button class="pill" id="quizBtn" title="Попросить задачку сейчас (Q)">📐 Задачка</button>
       <span class="pill clickpill" id="clickPill">+1/клик</span>
       <span class="pill combo" id="comboPill" hidden>Комбо x2</span>
@@ -356,6 +382,7 @@
       <span id="albumCount">0/0</span>
       <button class="quiz-close" id="albumClose" aria-label="Закрыть альбом">✕</button>
     </div>
+    <div class="album-hint" id="albumProgress"></div>
     <div class="album-hint">Фото открываются за лапки, накопленные за всё время (клики, задачки и помощники). Кликни по открытому фото — Саян примет эту позу.</div>
     <div id="albumGrid"></div>
     <button class="pill" id="albumAuto">🔀 Авто-смена поз</button>
@@ -372,7 +399,8 @@
     </div>
     <div class="secret-goal">Великая цель: пройди все 9 новых жизней. Каждая открывает один секрет Саяна, которого нет в обычном альбоме: кружок 🎬 или фото. Финал — тот самый запретный крупный план 🙈</div>
     <div id="secretGrid"></div>
-    <div class="album-hint">Секреты открываются только за новые жизни (престиж). Цена каждой следующей жизни растёт — это марафон, не спринт.</div>
+    <div class="album-hint" id="secretHow"></div>
+    <button class="pill quiz-next" id="secretToPrestige">→ К пилюле новой жизни</button>
   </div>
 </div>
 
@@ -383,6 +411,19 @@
     <div class="secret-view-t" id="secretViewT"></div>
     <div class="secret-view-s" id="secretViewS"></div>
     <button class="pill" id="secretViewClose">✕ Закрыть</button>
+  </div>
+</div>
+
+<div id="gradeOverlay" hidden>
+  <div class="card grade" role="dialog" aria-label="Выбор класса ученика">
+    <div class="row">
+      <span class="grade-title">🎓 В каком классе ученик?</span>
+      <div class="spacer"></div>
+      <button class="quiz-close" id="gradeClose" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="grade-hint">Задачки подстроятся под класс: от счёта до 20 в 1-м до тригонометрии и интегралов в 10–11-м. Класс можно только повышать — понижение закрыто, чтобы не фармить лёгкие задачки.</div>
+    <div id="gradeGrid"></div>
+    <button class="pill grade-mix" id="gradeMix">🎓 Микс — задачки из всех классов</button>
   </div>
 </div>
 
@@ -400,11 +441,12 @@ const store = {
 };
 const raw = JSON.parse(store.get() || "{}");
 const S = Object.assign({ pets: 0, solved: 0, bestCombo: 0, name: null, sound: true, upg: {}, t: 0,
-  totalPets: 0, runPets: 0, lives: 0, quizSeed: 0, quizPos: 0, photo: null, albumNew: false, secretNew: false }, raw);
+  totalPets: 0, runPets: 0, lives: 0, quizSeed: 0, quizPos: 0, photo: null, albumNew: false, secretNew: false, grade: null }, raw);
 if (!S.upg || typeof S.upg !== "object") S.upg = {};
 if (raw.totalPets === undefined) { S.totalPets = S.pets; S.runPets = S.pets; }
 if (!S.quizSeed) S.quizSeed = (Math.random() * 2 ** 31) >>> 0;
 S.lives = Math.min(9, Math.max(0, Math.floor(Number(S.lives) || 0)));
+S.grade = (S.grade === 0 || (Number.isInteger(S.grade) && S.grade >= 1 && S.grade <= 11)) ? S.grade : null;
 
 const SLEEP_IDLE = 18;
 const ZOOMIES_SECONDS = 6, ZOOMIES_COOLDOWN = 35, QUIZ_CADENCE = 26;
@@ -675,9 +717,12 @@ function mulberry32(a) {
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
 }
+const GRADE_KEYS = Object.keys(D.grades).map(Number).sort((a, b) => a - b);
+const MIX_BANK = GRADE_KEYS.reduce((acc, g) => acc.concat(D.grades[g]), []);
+function quizBank() { return S.grade ? D.grades[String(S.grade)] : MIX_BANK; }
 function buildOrder() {
   const rng = mulberry32(S.quizSeed);
-  const a = Array.from({ length: D.quiz.length }, (_, i) => i);
+  const a = Array.from({ length: quizBank().length }, (_, i) => i);
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
@@ -689,7 +734,7 @@ function nextQuiz() {
     while (quizOrderCache[0] === last);
     S.quizPos = 0;
   }
-  return D.quiz[quizOrderCache[S.quizPos++]];
+  return quizBank()[quizOrderCache[S.quizPos++]];
 }
 
 function spawnQuiz() {
@@ -708,6 +753,8 @@ function spawnQuiz() {
     btns[i].title = "Ответ " + (i + 1) + " — клавиша " + (i + 1);
   }
   $("quizFeedback").hidden = true;
+  $("quizFeedback").className = "";
+  $("quizNext").hidden = true;
   $("quizCard").hidden = false;
   play("treat");
 }
@@ -720,6 +767,7 @@ function showHint() {
 function hideQuiz() {
   quiz = null; reviewing = false;
   clearTimeout(reviewTimer);
+  $("quizNext").hidden = true;
   $("quizCard").hidden = true;
 }
 function answer(i) {
@@ -734,16 +782,17 @@ function answer(i) {
     const rw = quizReward();
     addPets(rw); S.solved++;
     fb.textContent = "Верно! +" + fmt(rw) + " лапок 🐾";
+    fb.className = "ok";
     play("treat");
     floatAtCat("+" + fmt(rw), "var(--sage)");
-    reviewTimer = setTimeout(hideQuiz, 1200);
   } else {
     btns[i].className = "wrong";
     btns[quiz.c].className = "right";
     fb.textContent = "Не совсем. Верно: " + quiz.o[quiz.c] + ". " + quiz.e;
+    fb.className = "bad";
     play("meow2");
-    reviewTimer = setTimeout(hideQuiz, 3200);
   }
+  $("quizNext").hidden = false;
   refresh();
   queueSave();
 }
@@ -754,7 +803,7 @@ function refresh() {
   $("levelNums").textContent = li.next ? fmt(S.pets) + " / " + fmt(li.next[0]) : fmt(S.pets) + " · максимум";
   $("levelBar").style.width = (li.ratio * 100).toFixed(1) + "%";
   $("solved").textContent = "📐 " + S.solved;
-  $("solved").title = "Решено задачек: " + S.solved + " из " + D.quiz.length;
+  $("solved").title = "Решено задачек: " + S.solved + " · банк класса: " + quizBank().length;
   $("unit").textContent = plural(Math.floor(S.pets));
   $("clickPill").textContent = "+" + fmt(clickPower()) + "/клик";
   $("ratePill").textContent = "+" + fmt(passiveRate()) + "/сек";
@@ -763,6 +812,7 @@ function refresh() {
   $("nameLine").hidden = !S.name;
   if (S.name) $("nameLine").textContent = "👋 " + S.name;
   $("soundBtn").textContent = S.sound ? "🔊" : "🔇";
+  $("gradeBtn").textContent = "🎓 " + (S.grade ? S.grade + " кл" : "микс");
   $("livesPill").textContent = "🔐 " + S.lives + "/9 · " + multStr();
   const req = prestigeReq();
   const ready = S.lives < MAX_LIVES && S.runPets >= req;
@@ -770,11 +820,16 @@ function refresh() {
   const pb = $("prestigeBtn");
   pb.classList.toggle("ready", ready);
   pb.disabled = !ready;
-  pb.textContent = S.lives >= MAX_LIVES ? "👑 Все 9 секретов" : ready ? "🌟 Открыть секрет №" + (S.lives + 1) : "🔐 " + fmt(S.runPets) + "/" + fmt(req);
+  pb.textContent = S.lives >= MAX_LIVES ? "👑 Все 9 секретов" : ready ? "🌟 Открыть секрет №" + (S.lives + 1) : "🔐 Новая жизнь · " + fmt(S.runPets) + "/" + fmt(req);
   pb.title = S.lives >= MAX_LIVES ? "Великая цель достигнута: все 9 секретов Саяна открыты!"
     : "Новая жизнь №" + (S.lives + 1) + ": накопи " + fmt(req) + " лапок за этот забег и открой секрет №" + (S.lives + 1) + " из тайного альбома (бонус к лапкам +" + Math.round(LIFE_BONUS * 100) + "% прилагается)";
+  $("secretHow").textContent = S.lives >= MAX_LIVES
+    ? "👑 Все 9 секретов открыты — великая цель достигнута!"
+    : "🔐 Новая жизнь №" + (S.lives + 1) + ": накопи " + fmt(req) + " лапок за этот забег и нажми красную пилюлю «🔐 Новая жизнь …» под котом — откроется секрет №" + (S.lives + 1) + ". Сейчас: " + fmt(S.runPets) + "/" + fmt(req) + ". Цена каждой следующей жизни растёт — это марафон, не спринт.";
+  $("secretToPrestige").hidden = S.lives >= MAX_LIVES;
   $("poseBtn").classList.toggle("badge", !!S.albumNew);
   $("secretBtn").classList.toggle("badge", !!S.secretNew);
+  syncAlbumProgress();
 }
 
 let lastT = performance.now();
@@ -835,6 +890,7 @@ $("quizBtn").addEventListener("click", spawnQuiz);
 $("hintBtn").addEventListener("click", showHint);
 $("quizClose").addEventListener("click", hideQuiz);
 [...$("quizOpts").children].forEach((b, i) => b.addEventListener("click", () => answer(i)));
+$("quizNext").addEventListener("click", () => { hideQuiz(); spawnQuiz(); });
 $("soundBtn").addEventListener("click", () => {
   S.sound = !S.sound;
   if (S.sound) initAudio();
@@ -862,13 +918,13 @@ $("prestigeBtn").addEventListener("click", () => {
 $("resetBtn").addEventListener("click", () => {
   if (!confirm("Начать заново? Лапки, прокачка, задачки, оба альбома и все 9 секретов обнулятся.\nИмя и звук останутся.")) return;
   S.pets = 0; S.solved = 0; S.bestCombo = 0; S.upg = {};
-  S.totalPets = 0; S.runPets = 0; S.lives = 0; S.photo = null; S.albumNew = false; S.secretNew = false;
+  S.totalPets = 0; S.runPets = 0; S.lives = 0; S.photo = null; S.albumNew = false; S.secretNew = false; S.grade = null;
   S.quizSeed = (Math.random() * 2 ** 31) >>> 0; S.quizPos = 0; quizOrderCache = null;
   combo = 0; energy = 0; clicks = 0; shownScore = 0; sleeping = false;
   hideQuiz();
   say("Новый ученик за партой! Мяу — начнём с первой лапки! 🐾");
   play("meow");
-  refresh(); updateShop(); save();
+  refresh(); updateShop(); save(); openGrade();
 });
 $("titleBtn").addEventListener("click", () => {
   const name = prompt("Как тебя зовут? Имя появится под заголовком.", S.name || "");
@@ -877,9 +933,67 @@ $("titleBtn").addEventListener("click", () => {
   say(S.name ? "Теперь Саян знает тебя: " + S.name + " 🏅" : "Кот Саян");
   refresh(); queueSave();
 });
+const GRADE_TOPICS = { 1: "счёт до 20", 2: "таблица ×", 3: "× и ÷", 4: "дроби и задачи",
+  5: "дроби, %", 6: "отношения", 7: "алгебра", 8: "корни, геометрия", 9: "ОГЭ",
+  10: "тригонометрия", 11: "ЕГЭ, интегралы" };
+function renderGradeGrid() {
+  const grid = $("gradeGrid");
+  grid.innerHTML = "";
+  const committed = S.grade !== null && S.grade !== 0;
+  for (const g of GRADE_KEYS) {
+    const locked = committed && g < S.grade;
+    const b = document.createElement("button");
+    b.className = "grade-cell" + (S.grade === g ? " sel" : "");
+    b.disabled = locked;
+    b.title = locked ? "Понижать класс нельзя — иначе лёгкие задачки для фарма" : g + " класс — " + GRADE_TOPICS[g];
+    const n = document.createElement("span"); n.className = "n"; n.textContent = g;
+    const lbl = document.createElement("span"); lbl.className = "lbl"; lbl.textContent = "класс";
+    const topic = document.createElement("span"); topic.className = "topic"; topic.textContent = locked ? "🔒 только вверх" : GRADE_TOPICS[g];
+    b.append(n, lbl, topic);
+    b.addEventListener("click", () => chooseGrade(g));
+    grid.appendChild(b);
+  }
+  $("gradeMix").classList.toggle("sel", S.grade === 0);
+  $("gradeMix").disabled = committed;
+  $("gradeMix").title = committed ? "Микс доступен только до первого выбора класса" : "";
+  $("gradeClose").hidden = S.grade === null;
+}
+function openGrade() { renderGradeGrid(); $("gradeOverlay").hidden = false; }
+function chooseGrade(g) {
+  const committed = S.grade !== null && S.grade !== 0;
+  if (committed && (g === 0 || g < S.grade)) return;
+  S.grade = g;
+  S.quizSeed = (Math.random() * 2 ** 31) >>> 0; S.quizPos = 0; quizOrderCache = null;
+  hideQuiz();
+  $("gradeOverlay").hidden = true;
+  say(g ? "Задачки для " + g + " класса! Саян готов 🎓" : "Микс из всех классов! Саян готов 🎓");
+  refresh(); queueSave();
+}
+let gradePressTimer = null, gradeLongFired = false;
+const gradeBtnEl = $("gradeBtn");
+gradeBtnEl.addEventListener("pointerdown", () => {
+  gradeLongFired = false;
+  clearTimeout(gradePressTimer);
+  gradePressTimer = setTimeout(() => { gradeLongFired = true; openGrade(); }, 650);
+});
+gradeBtnEl.addEventListener("pointerup", () => {
+  clearTimeout(gradePressTimer);
+  if (!gradeLongFired) say("Класс ученика: " + (S.grade ? S.grade : "микс") + ". Задачки подобраны под него 🎓");
+  gradeLongFired = false;
+});
+gradeBtnEl.addEventListener("pointerleave", () => clearTimeout(gradePressTimer));
+gradeBtnEl.addEventListener("pointercancel", () => clearTimeout(gradePressTimer));
+gradeBtnEl.addEventListener("contextmenu", e => e.preventDefault());
+gradeBtnEl.addEventListener("keydown", e => {
+  if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); openGrade(); }
+});
+$("gradeMix").addEventListener("click", () => chooseGrade(0));
+$("gradeClose").addEventListener("click", () => { if (S.grade !== null) $("gradeOverlay").hidden = true; });
 window.addEventListener("keydown", e => {
   if (e.repeat) return;
-  if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); pet(); }
+  if (!$("gradeOverlay").hidden) { if (e.code === "Escape" && S.grade !== null) $("gradeOverlay").hidden = true; return; }
+  if (e.code === "Space") { e.preventDefault(); pet(); }
+  else if (e.code === "Enter") { e.preventDefault(); if (quiz && reviewing) { hideQuiz(); spawnQuiz(); } else pet(); }
   else if (e.code === "KeyQ") spawnQuiz();
   else if (e.code === "KeyH") showHint();
   else if (e.code === "Digit1") answer(0);
@@ -909,8 +1023,10 @@ window.addEventListener("storage", e => {
     S.photo = inc.photo || null;
     S.albumNew = !!inc.albumNew;
     S.secretNew = !!inc.secretNew;
+    S.grade = (inc.grade === 0 || (Number.isInteger(inc.grade) && inc.grade >= 1 && inc.grade <= 11)) ? inc.grade : null;
     quizOrderCache = null;
     refresh(); updateShop();
+    if (!$("gradeOverlay").hidden) renderGradeGrid();
   } catch (err) {}
 });
 
@@ -937,6 +1053,14 @@ function renderAlbum() {
   }
   $("albumCount").textContent = open + "/" + PHOTOS.length;
   $("albumAuto").classList.toggle("active", !S.photo);
+  syncAlbumProgress();
+}
+function syncAlbumProgress() {
+  const el = $("albumProgress");
+  const locked = PHOTOS.filter(p => S.totalPets < p.th);
+  if (!locked.length) { el.textContent = "👑 Все фото открыты! Накоплено за всё время: " + fmt(S.totalPets) + " лапок."; return; }
+  const next = Math.min(...locked.map(p => p.th));
+  el.textContent = "Накоплено за всё время: " + fmt(S.totalPets) + " лапок (покупки не уменьшают) · до ближайшего фото осталось " + fmt(Math.max(0, next - S.totalPets));
 }
 $("poseBtn").addEventListener("click", () => {
   S.albumNew = false;
@@ -965,8 +1089,8 @@ function renderSecrets() {
     cell.className = "sec" + (isOpen ? "" : " locked") + (n === MAX_LIVES ? " final" : "");
     cell.innerHTML = '<span class="sec-img"><img loading="lazy" src="assets/sprites/' + (p.p || p.f) + '" alt="' + (isOpen ? p.t : "Закрытый секрет") + '">' +
       (isOpen && p.v ? '<span class="sec-play">▶</span>' : "") +
-      (isOpen ? "" : '<span class="sec-lock"><span class="n">🔒</span>Секрет №' + n + "<span>новая жизнь " + n + "</span></span>") + "</span>" +
-      '<span class="sec-t">' + (isOpen ? p.t : "???") + "</span>";
+      (isOpen ? "" : '<span class="sec-lock"><span class="n">🔒</span></span>') + "</span>" +
+      '<span class="sec-t">' + (isOpen ? p.t : 'Секрет №' + n + '<span class="sec-life">новая жизнь ' + n + '</span>') + "</span>";
     if (isOpen) cell.addEventListener("click", () => openSecret(i));
     else cell.disabled = true;
     grid.appendChild(cell);
@@ -1008,6 +1132,13 @@ $("secretBtn").addEventListener("click", () => {
   if (reveal >= 0) openSecret(reveal);
 });
 $("secretClose").addEventListener("click", () => { $("secretOverlay").hidden = true; });
+$("secretToPrestige").addEventListener("click", () => {
+  $("secretOverlay").hidden = true;
+  document.querySelector(".prestige").scrollIntoView({ block: "center", behavior: "smooth" });
+  const pb = $("prestigeBtn");
+  pb.style.animation = "glow 1.6s ease-in-out 2";
+  setTimeout(() => { pb.style.animation = ""; }, 3300);
+});
 $("secretOverlay").addEventListener("click", e => { if (e.target === $("secretOverlay")) $("secretOverlay").hidden = true; });
 $("secretViewClose").addEventListener("click", closeSecretView);
 $("secretView").addEventListener("click", e => { if (e.target === $("secretView")) closeSecretView(); });
@@ -1110,7 +1241,7 @@ function buy(u) {
 function exportCode() {
   const payload = { v: 1, pets: S.pets, solved: S.solved, bestCombo: S.bestCombo,
     name: S.name, sound: S.sound, upg: S.upg, totalPets: S.totalPets, runPets: S.runPets,
-    lives: S.lives, quizSeed: S.quizSeed, quizPos: S.quizPos, photo: S.photo, t: Date.now() };
+    lives: S.lives, quizSeed: S.quizSeed, quizPos: S.quizPos, photo: S.photo, grade: S.grade, t: Date.now() };
   const bytes = new TextEncoder().encode(JSON.stringify(payload));
   let bin = "";
   for (const b of bytes) bin += String.fromCharCode(b);
@@ -1138,12 +1269,14 @@ function importCode(code) {
     S.quizPos = Math.max(0, Math.floor(Number(o.quizPos) || 0));
     S.photo = typeof o.photo === "string" ? o.photo : null;
     if (S.photo && !PHOTOS.some(p => p.f === S.photo && S.totalPets >= p.th)) S.photo = null;
+    S.grade = (o.grade === 0 || (Number.isInteger(o.grade) && o.grade >= 1 && o.grade <= 11)) ? o.grade : null;
     quizOrderCache = null;
     shownScore = S.pets;
     hideQuiz();
     refresh(); updateShop(); save();
     say("Прогресс восстановлен! С возвращением" + (S.name ? ", " + S.name : "") + " 🐾");
     play("levelup");
+    if (S.grade === null) openGrade();
   } catch (e) { say("Код не читается 🙈 Проверь, что скопирован целиком."); }
 }
 $("copySaveBtn").addEventListener("click", async () => {
@@ -1173,8 +1306,20 @@ if (S.t && passiveRate() > 0) {
   }
 }
 
+function isTouch() { return matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0; }
+function syncCtrlHint() {
+  $("ctrlHint").textContent = isTouch()
+    ? "Тапни по коту — +1 лапка · 📐 Задачка — пример · тап по варианту — ответ"
+    : "Пробел — погладить · Q — задачка · H — подсказка · 1/2/3 — ответ";
+  const b = $("bubble");
+  if (isTouch() && b.textContent.indexOf("Пробел") >= 0) b.textContent = "Тапни по Саяну, чтобы погладить 🐾";
+}
+matchMedia("(pointer: coarse)").addEventListener("change", syncCtrlHint);
+syncCtrlHint();
+
 refresh();
 updateShop();
+if (S.grade === null) openGrade();
 if (offlineMsg) say(offlineMsg);
 else if (S.totalPets === 0 && S.lives === 0) say("🔐 Великая цель: 9 новых жизней откроют 9 секретов Саяна — кружки и финальное фото. Гладь кота и копи лапки!");
 refreshPin();
