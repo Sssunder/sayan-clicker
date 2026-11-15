@@ -4,14 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Кот Саян — уютный кликер</title>
-<meta name="description" content="Уютный кликер с котом Саяном и математическими задачками. Кликай по коту, решай задачки, копи лапки — прямо на доске или в браузере.">
+<meta name="description" content="Уютный кликер с котом Саяном: 500 математических задачек с подсказками, альбом фото за лапки и престиж «девять жизней». Кликай по коту и готовься к ОГЭ без стресса — прямо на доске или в браузере.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 <script>if (new URLSearchParams(location.search).has("popup")) document.documentElement.classList.add("popup");</script>
 <style>
   :root {
     --bg: #F5F5F7; --card: #FFFFFF; --text: #1D1D1F; --sub: #86868B;
     --hair: rgba(0,0,0,.07); --pill: #E8E8ED; --pill-text: #1D1D1F;
-    --accent: #0A84FF; --sage: #34C759; --amber: #FF9F0A; --shadow: 0 8px 24px rgba(0,0,0,.07);
+    --accent: #0A84FF; --sage: #34C759; --amber: #FF9F0A; --rose: #FF375F;
+    --shadow: 0 8px 24px rgba(0,0,0,.07);
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -28,9 +29,20 @@
     display: flex; justify-content: center; align-items: flex-start;
     -webkit-tap-highlight-color: transparent;
   }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(60% 50% at 12% -5%, rgba(255,159,10,.12), transparent 70%),
+      radial-gradient(50% 40% at 92% 8%, rgba(10,132,255,.10), transparent 70%),
+      radial-gradient(75% 60% at 50% 105%, rgba(52,199,89,.08), transparent 70%);
+  }
+  @media (prefers-color-scheme: dark) {
+    body::before { opacity: .55; }
+  }
   .app { width: min(430px, 100%); padding: 12px 12px 16px; display: flex; flex-direction: column; gap: 10px; }
   .app > * { flex-shrink: 0; }
   .row { display: flex; align-items: center; gap: 8px; }
+  header.row { flex-wrap: wrap; row-gap: 6px; }
   .row.wrap { flex-wrap: wrap; row-gap: 6px; }
   .spacer { flex: 1; }
   .card {
@@ -78,6 +90,12 @@
   .quiz-title { font-size: 12.5px; font-weight: 700; color: var(--sage); }
   .quiz-close { padding: 2px 10px; font-size: 14px; }
   #quizQ { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
+  #hintBtn { font-size: 12px; padding: 6px 12px; align-self: flex-start;
+    background: color-mix(in srgb, var(--amber) 16%, var(--card)); color: var(--amber); }
+  #hintBtn:disabled { opacity: .5; cursor: default; }
+  #quizHint { font-size: 12.5px; font-weight: 600; color: var(--amber);
+    background: color-mix(in srgb, var(--amber) 12%, var(--card)); border-radius: 10px; padding: 6px 10px; }
+  #quizHint[hidden] { display: none; }
   .opts { display: flex; gap: 8px; }
   .opts button {
     flex: 1; padding: 9px 6px; border-radius: 12px; font-weight: 600; font-size: 14px;
@@ -101,6 +119,15 @@
   .energy .bar { flex: 1; margin: 0; height: 5px; }
   .energy .bar > div { background: var(--amber); }
   #solved { color: var(--sage); }
+  .prestige { margin-top: 9px; font-size: 11.5px; font-weight: 600; color: var(--sub); }
+  .prestige .bar { flex: 1; margin: 0; height: 5px; }
+  .prestige .bar > div { background: linear-gradient(90deg, var(--amber), var(--rose)); }
+  #livesPill { color: var(--rose); white-space: nowrap; }
+  #prestigeBtn { font-size: 11.5px; padding: 6px 10px; white-space: nowrap;
+    background: color-mix(in srgb, var(--rose) 14%, var(--card)); color: var(--rose); }
+  #prestigeBtn:disabled { opacity: .6; cursor: default; }
+  #prestigeBtn.ready { background: var(--rose); color: #fff; opacity: 1; animation: glow 1.6s ease-in-out infinite; }
+  @keyframes glow { 50% { filter: brightness(1.18); } }
   .foot { font-size: 11px; color: var(--sub); text-align: center; }
   html { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--sub) 50%, transparent) transparent; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -108,6 +135,10 @@
   ::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--sub) 45%, transparent); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--sub); }
   #pinBtn.active { background: color-mix(in srgb, var(--accent) 20%, var(--card)); color: var(--accent); }
+  #poseBtn { position: relative; }
+  #poseBtn.badge::after, #secretBtn.badge::after { content: ""; position: absolute; top: 3px; right: 4px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--rose); box-shadow: 0 0 0 2px var(--card); }
+  #secretBtn { position: relative; }
   #closeBtn { display: none; }
   .popup .app { width: 100%; padding: 8px 8px 10px; gap: 8px; }
   .popup .card { padding: 10px; border-radius: 16px; }
@@ -123,6 +154,7 @@
   .popup #score { font-size: 26px; }
   .popup .level { margin-top: 4px; }
   .popup .energy { margin-top: 6px; }
+  .popup .prestige { margin-top: 6px; }
   .popup #quizQ { font-size: 14px; }
   .popup .opts button { padding: 7px 5px; font-size: 13px; }
   .clickpill { background: color-mix(in srgb, var(--accent) 12%, var(--card)); color: var(--accent); }
@@ -151,14 +183,92 @@
   .popup .upg-name { font-size: 12px; }
   .popup .upg-eff { font-size: 10.5px; }
   .popup .buy { padding: 5px 8px; font-size: 11px; }
+  #albumOverlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.38); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 16px; }
+  #albumOverlay[hidden] { display: none; }
+  .album { width: min(430px, 100%); max-height: min(86vh, 720px); overflow: auto; animation: pop .25s ease-out; }
+  @keyframes pop { from { transform: scale(.94); opacity: 0; } }
+  .album-hint { font-size: 11.5px; color: var(--sub); margin-top: 6px; }
+  #albumCount { font-size: 12px; font-weight: 700; color: var(--sage); }
+  #albumGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .ph { display: flex; flex-direction: column; gap: 4px; padding: 6px; border-radius: 14px;
+    background: color-mix(in srgb, var(--pill) 55%, var(--card)); text-align: center; }
+  .ph.sel { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .ph-img { position: relative; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden; display: block; }
+  .ph-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ph.locked { cursor: default; }
+  .ph.locked .ph-img img { filter: blur(7px) grayscale(1) brightness(.55); transform: scale(1.12); }
+  .ph-lock { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: 700; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,.65); }
+  .ph-t { font-size: 11px; font-weight: 600; color: var(--sub); }
+  #albumAuto { margin-top: 10px; font-size: 12px; }
+  #albumAuto.active { background: color-mix(in srgb, var(--accent) 18%, var(--card)); color: var(--accent); }
+  .popup .album { max-height: 92vh; }
+  .popup #albumGrid { gap: 6px; }
+  .popup .ph-t { font-size: 10px; }
+  #secretOverlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+    background: rgba(5,4,2,.62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 16px; }
+  #secretOverlay[hidden] { display: none; }
+  .secret { width: min(430px, 100%); max-height: min(88vh, 740px); overflow: auto; animation: pop .25s ease-out;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--amber) 7%, var(--card)), var(--card) 55%);
+    border-color: color-mix(in srgb, var(--amber) 40%, var(--hair)); }
+  .secret-title { font-size: 12.5px; font-weight: 800; letter-spacing: .02em; color: var(--amber); }
+  @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .secret-title { background: linear-gradient(90deg, var(--amber), var(--rose));
+      -webkit-background-clip: text; background-clip: text; color: transparent; }
+  }
+  #secretCount { font-size: 12px; font-weight: 800; color: var(--amber); }
+  .secret-goal { font-size: 11.5px; font-weight: 600; color: var(--sub); margin-top: 6px; line-height: 1.4; }
+  #secretGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .sec { display: flex; flex-direction: column; gap: 4px; padding: 6px; border-radius: 14px;
+    background: color-mix(in srgb, var(--pill) 55%, var(--card)); text-align: center; }
+  .sec-img { position: relative; aspect-ratio: 1; border-radius: 50%; overflow: hidden; display: block;
+    background: color-mix(in srgb, var(--pill) 70%, var(--card)); }
+  .sec-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .sec-play { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 34%; aspect-ratio: 1;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; color: #fff;
+    background: rgba(10,8,4,.5); border: 1px solid rgba(255,255,255,.4); backdrop-filter: blur(2px);
+    text-shadow: 0 1px 3px rgba(0,0,0,.7); pointer-events: none; }
+  .sec.locked { cursor: default; }
+  .sec.locked .sec-img img { filter: blur(10px) grayscale(1) brightness(.32); transform: scale(1.15); }
+  .sec-lock { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: #fff; font-size: 11px; font-weight: 700; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,.8); gap: 2px; }
+  .sec-lock .n { font-size: 15px; }
+  .sec-t { font-size: 10.5px; font-weight: 700; color: var(--sub); }
+  .sec.final:not(.locked) { outline: 2px solid var(--amber); outline-offset: -1px;
+    box-shadow: 0 0 18px color-mix(in srgb, var(--amber) 45%, transparent); }
+  .sec.final:not(.locked) .sec-t { color: var(--amber); }
+  .sec.final .sec-img::after { content: "👑"; position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 14px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  #secretView { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.86); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); padding: 18px; }
+  #secretView[hidden] { display: none; }
+  .secret-view-card { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: min(430px, 100%);
+    max-height: 92vh; animation: pop .25s ease-out; }
+  #secretViewImg { max-width: 100%; max-height: 66vh; border-radius: 18px; object-fit: contain;
+    box-shadow: 0 0 40px color-mix(in srgb, var(--amber) 35%, transparent), 0 12px 40px rgba(0,0,0,.6); }
+  #secretViewVid { width: min(340px, 86vw); aspect-ratio: 1; border-radius: 50%; object-fit: cover; background: #000;
+    box-shadow: 0 0 40px color-mix(in srgb, var(--amber) 35%, transparent), 0 12px 40px rgba(0,0,0,.6); }
+  .secret-view-t { font-size: 16px; font-weight: 800; color: #fff; text-align: center; }
+  .secret-view-s { font-size: 12.5px; font-weight: 600; color: var(--amber); text-align: center; }
+  #secretViewClose { margin-top: 4px; }
+  .popup .secret { max-height: 94vh; }
+  .popup #secretGrid { gap: 6px; }
+  .popup .sec-t { font-size: 9.5px; }
   @media (max-width: 340px) {
     .pill { padding: 6px 10px; font-size: 12px; }
+    .pill.icon { padding: 6px 8px; font-size: 12px; }
+    .title { font-size: 16px; }
     #score { font-size: 28px; }
     .opts { flex-wrap: wrap; }
+    #albumGrid { grid-template-columns: repeat(2, 1fr); }
+    #secretGrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   }
   @media (prefers-reduced-motion: reduce) {
     button { transition: none; }
     button:active { transform: none; }
+    .album { animation: none; }
+    #prestigeBtn.ready { animation: none; }
   }
 </style>
 </head>
@@ -167,7 +277,8 @@
   <header class="row">
     <button class="title" id="titleBtn" title="Клик — подписаться своим именем">🐾 Кот Саян</button>
     <div class="spacer"></div>
-    <button class="pill icon" id="poseBtn" aria-label="Сменить позу" title="Сменить позу">🖼️</button>
+    <button class="pill icon" id="poseBtn" aria-label="Альбом фото" title="Альбом фото Саяна">🖼️</button>
+    <button class="pill icon" id="secretBtn" aria-label="Тайный альбом" title="Тайный альбом: 8 кружков и финальное фото за 9 новых жизней">🔐</button>
     <button class="pill icon" id="pinBtn" aria-label="Окошко поверх всех окон" aria-pressed="false" title="Открыть отдельное окошко поверх всех окон">📌</button>
     <button class="pill icon" id="soundBtn" aria-label="Звук">🔊</button>
     <button class="pill icon" id="resetBtn" aria-label="Начать заново" title="Начать заново (новый ученик)">🔄</button>
@@ -179,16 +290,18 @@
     <div class="bubble" id="bubble">Кликни по Саяну или нажми Пробел, чтобы погладить</div>
     <div id="catWrap"><img id="cat" src="assets/sprites/curious.png" alt="Кот Саян"></div>
     <div id="fx"></div>
-    <div class="hint">Пробел — погладить · Q — задачка · 1/2/3 — ответ</div>
+    <div class="hint">Пробел — погладить · Q — задачка · H — подсказка · 1/2/3 — ответ</div>
   </section>
 
   <section class="card quiz" id="quizCard" hidden aria-label="Задачка">
     <div class="row">
-      <span class="quiz-title" id="quizTitle">📐 Быстрая задачка на +30 лапок</span>
+      <span class="quiz-title" id="quizTitle">📐 Задачка</span>
       <div class="spacer"></div>
       <button class="quiz-close" id="quizClose" aria-label="Закрыть задачку">✕</button>
     </div>
     <div id="quizQ"></div>
+    <button class="pill" id="hintBtn" title="Показать подсказку (H)">💡 Подсказка</button>
+    <div id="quizHint" hidden></div>
     <div class="opts" id="quizOpts">
       <button></button><button></button><button></button>
     </div>
@@ -212,6 +325,11 @@
       <span id="solved" title="Решено задачек">📐 0</span>
       <span id="mood">👀</span>
     </div>
+    <div class="row prestige" title="Великая цель: 9 новых жизней → 9 секретов Саяна (кружки и финальное фото). Финал — тот самый крупный план 🙈">
+      <span id="livesPill">🔐 0/9</span>
+      <div class="bar"><div id="prestigeBar"></div></div>
+      <button class="pill" id="prestigeBtn">🔐 0/2 500</button>
+    </div>
   </section>
 
   <section class="card" aria-label="Прокачка">
@@ -227,8 +345,46 @@
     </div>
   </section>
 
-  <footer class="foot">Прогресс сохраняется в браузере · 💾 код переносит его на другой компьютер</footer>
+  <footer class="foot">Прогресс в браузере · 📸 фото за лапки · 🔐 9 секретов за 9 жизней · 💾 код переноса</footer>
 </main>
+
+<div id="albumOverlay" hidden>
+  <div class="card album" role="dialog" aria-label="Альбом фото Саяна">
+    <div class="row">
+      <span class="shop-title">📸 Альбом Саяна</span>
+      <div class="spacer"></div>
+      <span id="albumCount">0/0</span>
+      <button class="quiz-close" id="albumClose" aria-label="Закрыть альбом">✕</button>
+    </div>
+    <div class="album-hint">Фото открываются за лапки, накопленные за всё время (клики, задачки и помощники). Кликни по открытому фото — Саян примет эту позу.</div>
+    <div id="albumGrid"></div>
+    <button class="pill" id="albumAuto">🔀 Авто-смена поз</button>
+  </div>
+</div>
+
+<div id="secretOverlay" hidden>
+  <div class="card secret" role="dialog" aria-label="Тайный альбом Саяна">
+    <div class="row">
+      <span class="secret-title">🔐 Тайный альбом</span>
+      <div class="spacer"></div>
+      <span id="secretCount">0/9</span>
+      <button class="quiz-close" id="secretClose" aria-label="Закрыть тайный альбом">✕</button>
+    </div>
+    <div class="secret-goal">Великая цель: пройди все 9 новых жизней. Каждая открывает один секрет Саяна, которого нет в обычном альбоме: кружок 🎬 или фото. Финал — тот самый запретный крупный план 🙈</div>
+    <div id="secretGrid"></div>
+    <div class="album-hint">Секреты открываются только за новые жизни (престиж). Цена каждой следующей жизни растёт — это марафон, не спринт.</div>
+  </div>
+</div>
+
+<div id="secretView" hidden>
+  <div class="secret-view-card">
+    <img id="secretViewImg" src="" alt="Приватное фото Саяна">
+    <video id="secretViewVid" muted loop playsinline preload="metadata" hidden></video>
+    <div class="secret-view-t" id="secretViewT"></div>
+    <div class="secret-view-s" id="secretViewS"></div>
+    <button class="pill" id="secretViewClose">✕ Закрыть</button>
+  </div>
+</div>
 
 <script src="quiz-data.js"></script>
 <script>
@@ -242,18 +398,74 @@ const store = {
   get() { try { return localStorage.getItem(SAVE_KEY); } catch (e) { return null; } },
   set(v) { try { localStorage.setItem(SAVE_KEY, v); } catch (e) {} },
 };
-const S = Object.assign({ pets: 0, solved: 0, bestCombo: 0, name: null, sound: true, upg: {}, t: 0 },
-  JSON.parse(store.get() || "{}"));
+const raw = JSON.parse(store.get() || "{}");
+const S = Object.assign({ pets: 0, solved: 0, bestCombo: 0, name: null, sound: true, upg: {}, t: 0,
+  totalPets: 0, runPets: 0, lives: 0, quizSeed: 0, quizPos: 0, photo: null, albumNew: false, secretNew: false }, raw);
 if (!S.upg || typeof S.upg !== "object") S.upg = {};
+if (raw.totalPets === undefined) { S.totalPets = S.pets; S.runPets = S.pets; }
+if (!S.quizSeed) S.quizSeed = (Math.random() * 2 ** 31) >>> 0;
+S.lives = Math.min(9, Math.max(0, Math.floor(Number(S.lives) || 0)));
 
 const SLEEP_IDLE = 18;
 const ZOOMIES_SECONDS = 6, ZOOMIES_COOLDOWN = 35, QUIZ_CADENCE = 26;
+const LIFE_BONUS = 0.25, MAX_LIVES = 9;
+const PRESTIGE_REQS = [2500, 6000, 15000, 40000, 100000, 250000, 600000, 1500000, 4000000];
+const prestigeReq = () => S.lives < MAX_LIVES ? PRESTIGE_REQS[S.lives] : Infinity;
+
+const SECRETS = [
+  { v: "secret_1.mp4", p: "secret_1.jpg", t: "Дозор у окна", s: "Периметр под контролем" },
+  { v: "secret_2.mp4", p: "secret_2.jpg", t: "Ласковый режим", s: "Гладить можно вечно" },
+  { v: "secret_3.mp4", p: "secret_3.jpg", t: "Коврик-обнимашка", s: "Синий плед одобрен" },
+  { v: "secret_4.mp4", p: "secret_4.jpg", t: "Атака на вкусняшку", s: "Жёлтый пакет побеждён" },
+  { v: "secret_5.mp4", p: "secret_5.jpg", t: "Лицо на миллион лапок", s: "Крупный план, как заказывали" },
+  { v: "secret_6.mp4", p: "secret_6.jpg", t: "Бой с плюшем", s: "Розовый враг повержен" },
+  { v: "secret_7.mp4", p: "secret_7.jpg", t: "Тыгыдык-охота", s: "Красный мяч не уйдёт" },
+  { v: "secret_8.mp4", p: "secret_8.jpg", t: "Маленький Саян", s: "Архив: котёнок у микроволновки" },
+  { f: "secret_9.jpg", t: "ТОТ САМЫЙ крупный план", s: "Запретные подушечки и язычок 🙈" },
+];
+
+const PHOTOS = [
+  { f: "curious.png",           t: "Любопытный Саян",    th: 0,     pose: "awake" },
+  { f: "sleep_cozy.png",        t: "Уютный сон",         th: 0,     pose: "sleep" },
+  { f: "photo_window.jpg",      t: "Хозяин подоконника", th: 150,   pose: "awake" },
+  { f: "photo_sink.jpg",        t: "В раковине",         th: 400,   pose: "awake" },
+  { f: "photo_cuddle.jpg",      t: "Вечер у подушки",    th: 900,   pose: "awake" },
+  { f: "photo_nap.jpg",         t: "Лапка свесилась",    th: 1800,  pose: "sleep" },
+  { f: "photo_sofa.jpg",        t: "Сон на диване",      th: 3200,  pose: "sleep" },
+  { f: "photo_sill_nap.jpg",    t: "Сон на окне",        th: 5500,  pose: "sleep" },
+  { f: "photo_armchair.jpg",    t: "Кресло и носочек",   th: 9000,  pose: "sleep" },
+  { f: "photo_chair.jpg",       t: "Носок-обнимашка",    th: 14000, pose: "sleep" },
+  { f: "photo_sprawl.jpg",      t: "Звёздочкой",         th: 21000, pose: "awake" },
+  { f: "photo_stretch_nap.jpg", t: "Сладкая потягушка",  th: 30000, pose: "sleep" },
+  { f: "photo_kitten_milk.jpg",   t: "Первый обед",          th: 600,    pose: "awake" },
+  { f: "photo_kitten_mouse.jpg",  t: "Мышка поймана",        th: 1200,   pose: "awake" },
+  { f: "photo_kitten_spider.jpg", t: "Охотник на пауков",    th: 2500,   pose: "awake" },
+  { f: "photo_kitten_bird.jpg",   t: "Птичка на ниточке",    th: 4200,   pose: "awake" },
+  { f: "photo_blue_mat.jpg",      t: "Сон на синем пледе",   th: 7000,   pose: "sleep" },
+  { f: "photo_kitten_monkey.jpg", t: "Друг-обезьянка",       th: 11000,  pose: "sleep" },
+  { f: "photo_kitten_back.jpg",   t: "Сон на ручках",        th: 16000,  pose: "sleep" },
+  { f: "photo_grumpy.jpg",        t: "Суровый взгляд",       th: 24000,  pose: "awake" },
+  { f: "photo_roof.jpg",          t: "Крыша-приключение",    th: 36000,  pose: "awake" },
+  { f: "photo_tree_meow.jpg",     t: "Покоритель деревьев",  th: 48000,  pose: "awake" },
+  { f: "photo_birch.jpg",         t: "Альпинист на берёзе",  th: 65000,  pose: "awake" },
+  { f: "photo_feeder.jpg",        t: "Домик на дереве",      th: 85000,  pose: "awake" },
+  { f: "photo_kitchen_hold.jpg",  t: "Баю-бай на кухне",     th: 110000, pose: "sleep" },
+  { f: "photo_sofa_paw.jpg",      t: "Лапка-подушечка",      th: 140000, pose: "sleep" },
+  { f: "photo_bite.jpg",          t: "Кусь за палец",        th: 170000, pose: "awake" },
+  { f: "photo_face_closeup.jpg",  t: "Нос в камеру",         th: 200000, pose: "awake" },
+  { f: "photo_branch.jpg",        t: "Ветер в шерсти",       th: 230000, pose: "awake" },
+  { f: "photo_blanket.jpg",       t: "Под одеялом",          th: 260000, pose: "sleep" },
+  { f: "photo_bite2.jpg",         t: "Кусь-куссь",           th: 290000, pose: "awake" },
+];
+if (S.photo && !PHOTOS.some(p => p.f === S.photo && S.totalPets >= p.th)) S.photo = null;
 
 let combo = 0, lastPet = -99, energy = 0, clicks = 0;
 let zoomiesUntil = 0, zoomiesCooldownUntil = 0, sleeping = false, wakePoseUntil = 0;
 let lastActivity = performance.now() / 1000, nextIdleQuiz = lastActivity + 75;
-let quiz = null, reviewing = false, quizCursor = 0, reviewTimer = 0;
+let quiz = null, reviewing = false, reviewTimer = 0;
 let shownScore = S.pets, saveTimer = 0;
+let awakePose = 0, sleepPose = 0, nextPoseAt = performance.now() / 1000 + 20;
+let quizOrderCache = null;
 
 const squash = { v: 0, vel: 0 };
 function springStep(s, dt) {
@@ -308,6 +520,7 @@ function fmt(n) {
   if (n < 1e9) return (n / 1e6).toFixed(1).replace(".", ",") + " млн";
   return (n / 1e9).toFixed(1).replace(".", ",") + " млрд";
 }
+const multStr = () => "×" + (Math.round(lifeMult() * 100) / 100).toLocaleString("ru-RU");
 
 const UPG = [
   { id: "click", ico: "🐾", name: "Сильная лапа", base: 20, g: 1.6, max: 25,
@@ -329,17 +542,30 @@ const UPG = [
 ];
 const lvl = id => S.upg[id] || 0;
 const cost = (u, l) => Math.floor(u.base * Math.pow(u.g, l));
-const clickPower = () => 1 + lvl("click");
-const passiveRate = () => UPG.reduce((s, u) => s + (u.rate || 0) * lvl(u.id), 0);
-const quizReward = () => D.quizReward + 15 * lvl("quiz");
+const lifeMult = () => 1 + LIFE_BONUS * S.lives;
+const clickPower = () => (1 + lvl("click")) * lifeMult();
+const passiveRate = () => UPG.reduce((s, u) => s + (u.rate || 0) * lvl(u.id), 0) * lifeMult();
+const quizReward = () => Math.round((D.quizReward + 15 * lvl("quiz")) * lifeMult());
 const comboWindow = () => 1.4 + .25 * lvl("combo");
 const zoomMult = () => 5 + lvl("zoom");
 
 function addPets(gain, silent) {
-  const prev = S.pets;
-  S.pets += gain;
+  const prev = S.pets, prevTotal = S.totalPets;
+  S.pets += gain; S.totalPets += gain; S.runPets += gain;
+  let unlockedPhoto = false;
+  for (const p of PHOTOS) {
+    if (p.th > 0 && prevTotal < p.th && S.totalPets >= p.th) {
+      say("📸 Новое фото в альбоме: «" + p.t + "»! Загляни в 🖼️");
+      play("levelup");
+      S.albumNew = true;
+      unlockedPhoto = true;
+      floatAtCat("📸", "var(--amber)");
+      if (!reduced) { floatAtCat("✨", "var(--sage)"); floatAtCat("🐾", "var(--rose)"); }
+    }
+  }
+  if (unlockedPhoto) return true;
   const li0 = levelInfo(prev), li1 = levelInfo(S.pets);
-  if (li1.i > li0.i) { say("Новый уровень: " + li1.title + "! 🎉"); play("levelup"); return true; }
+  if (li1.i > li0.i) { if (!silent) { say("Новый уровень: " + li1.title + "! 🎉"); play("levelup"); } return true; }
   if (!silent) {
     for (const k in D.milestones) {
       const th = +k;
@@ -381,19 +607,20 @@ function queueSave() {
   saveTimer = setTimeout(() => { saveTimer = 0; save(); }, 800);
 }
 
-const AWAKE_POSES = ["curious.png", "photo_window.jpg", "photo_cuddle.jpg", "photo_sink.jpg"];
-const SLEEP_POSES = ["sleep_cozy.png", "photo_nap.jpg", "photo_sofa.jpg", "photo_sill_nap.jpg"];
-let awakePose = 0, sleepPose = 0;
-let nextPoseAt = performance.now() / 1000 + 20;
-for (const f of AWAKE_POSES.concat(SLEEP_POSES)) {
-  const im = new Image();
-  im.src = "assets/sprites/" + f;
-}
+for (const p of PHOTOS) { const im = new Image(); im.src = "assets/sprites/" + p.f; }
+const unlocked = pose => PHOTOS.filter(p => p.pose === pose && S.totalPets >= p.th);
 
 function setPose() {
   const now = performance.now() / 1000;
-  const file = now < zoomiesUntil ? "zoomies.png" : now < wakePoseUntil ? "stretch.png"
-    : sleeping ? SLEEP_POSES[sleepPose] : AWAKE_POSES[awakePose];
+  let file;
+  if (now < zoomiesUntil) file = "zoomies.png";
+  else if (now < wakePoseUntil) file = "stretch.png";
+  else if (S.photo) file = S.photo;
+  else {
+    const list = unlocked(sleeping ? "sleep" : "awake");
+    const idx = sleeping ? sleepPose : awakePose;
+    file = list[Math.min(idx, list.length - 1)].f;
+  }
   const want = "assets/sprites/" + file;
   if ($("cat").getAttribute("src") !== want) {
     $("cat").setAttribute("src", want);
@@ -413,7 +640,7 @@ function pet() {
   const now = performance.now() / 1000;
   lastActivity = now; nextIdleQuiz = now + 75;
   initAudio();
-  let gain = clickPower();
+  let gain = 1 + lvl("click");
   if (sleeping) {
     sleeping = false; wakePoseUntil = now + 1.5; gain += 5;
     say((S.name ? S.name + ", " : "") + "Саян проснулся! +5 лапок за побудку 🌤");
@@ -423,6 +650,7 @@ function pet() {
   lastPet = now;
   S.bestCombo = Math.max(S.bestCombo, combo);
   if (combo >= 10) gain += 2; else if (combo >= 5) gain += 1;
+  gain *= lifeMult();
   if (now < zoomiesUntil) gain *= zoomMult();
   const celebrated = addPets(gain);
   clicks++;
@@ -439,11 +667,39 @@ function pet() {
   queueSave();
 }
 
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function buildOrder() {
+  const rng = mulberry32(S.quizSeed);
+  const a = Array.from({ length: D.quiz.length }, (_, i) => i);
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function nextQuiz() {
+  if (!quizOrderCache) quizOrderCache = buildOrder();
+  if (S.quizPos >= quizOrderCache.length) {
+    const last = quizOrderCache[quizOrderCache.length - 1];
+    do { S.quizSeed = (Math.random() * 2 ** 31) >>> 0; quizOrderCache = buildOrder(); }
+    while (quizOrderCache[0] === last);
+    S.quizPos = 0;
+  }
+  return D.quiz[quizOrderCache[S.quizPos++]];
+}
+
 function spawnQuiz() {
   if (quiz) return;
-  quiz = D.quiz[quizCursor++ % D.quiz.length];
+  quiz = nextQuiz();
   reviewing = false;
+  $("quizTitle").textContent = "📐 " + (D.cats[quiz.cat] || "Задачка") + " · +" + fmt(quizReward()) + " лапок";
   $("quizQ").textContent = quiz.q;
+  $("quizHint").hidden = true;
+  $("hintBtn").disabled = false;
   const btns = $("quizOpts").children;
   for (let i = 0; i < 3; i++) {
     btns[i].textContent = quiz.o[i];
@@ -454,6 +710,12 @@ function spawnQuiz() {
   $("quizFeedback").hidden = true;
   $("quizCard").hidden = false;
   play("treat");
+}
+function showHint() {
+  if (!quiz || reviewing) return;
+  $("quizHint").textContent = "💡 " + quiz.h;
+  $("quizHint").hidden = false;
+  $("hintBtn").disabled = true;
 }
 function hideQuiz() {
   quiz = null; reviewing = false;
@@ -471,9 +733,9 @@ function answer(i) {
     btns[i].className = "right";
     const rw = quizReward();
     addPets(rw); S.solved++;
-    fb.textContent = "Верно! +" + rw + " лапок 🐾";
+    fb.textContent = "Верно! +" + fmt(rw) + " лапок 🐾";
     play("treat");
-    floatAtCat("+" + rw, "var(--sage)");
+    floatAtCat("+" + fmt(rw), "var(--sage)");
     reviewTimer = setTimeout(hideQuiz, 1200);
   } else {
     btns[i].className = "wrong";
@@ -492,6 +754,7 @@ function refresh() {
   $("levelNums").textContent = li.next ? fmt(S.pets) + " / " + fmt(li.next[0]) : fmt(S.pets) + " · максимум";
   $("levelBar").style.width = (li.ratio * 100).toFixed(1) + "%";
   $("solved").textContent = "📐 " + S.solved;
+  $("solved").title = "Решено задачек: " + S.solved + " из " + D.quiz.length;
   $("unit").textContent = plural(Math.floor(S.pets));
   $("clickPill").textContent = "+" + fmt(clickPower()) + "/клик";
   $("ratePill").textContent = "+" + fmt(passiveRate()) + "/сек";
@@ -500,6 +763,18 @@ function refresh() {
   $("nameLine").hidden = !S.name;
   if (S.name) $("nameLine").textContent = "👋 " + S.name;
   $("soundBtn").textContent = S.sound ? "🔊" : "🔇";
+  $("livesPill").textContent = "🔐 " + S.lives + "/9 · " + multStr();
+  const req = prestigeReq();
+  const ready = S.lives < MAX_LIVES && S.runPets >= req;
+  $("prestigeBar").style.width = (S.lives >= MAX_LIVES ? 100 : Math.min(100, S.runPets / req * 100)).toFixed(1) + "%";
+  const pb = $("prestigeBtn");
+  pb.classList.toggle("ready", ready);
+  pb.disabled = !ready;
+  pb.textContent = S.lives >= MAX_LIVES ? "👑 Все 9 секретов" : ready ? "🌟 Открыть секрет №" + (S.lives + 1) : "🔐 " + fmt(S.runPets) + "/" + fmt(req);
+  pb.title = S.lives >= MAX_LIVES ? "Великая цель достигнута: все 9 секретов Саяна открыты!"
+    : "Новая жизнь №" + (S.lives + 1) + ": накопи " + fmt(req) + " лапок за этот забег и открой секрет №" + (S.lives + 1) + " из тайного альбома (бонус к лапкам +" + Math.round(LIFE_BONUS * 100) + "% прилагается)";
+  $("poseBtn").classList.toggle("badge", !!S.albumNew);
+  $("secretBtn").classList.toggle("badge", !!S.secretNew);
 }
 
 let lastT = performance.now();
@@ -540,8 +815,8 @@ function tick(t) {
   }
   if (now > nextPoseAt) {
     nextPoseAt = now + 20 + Math.random() * 15;
-    if (sleeping) sleepPose = (sleepPose + 1) % SLEEP_POSES.length;
-    else awakePose = (awakePose + 1) % AWAKE_POSES.length;
+    if (sleeping) sleepPose = (sleepPose + 1) % unlocked("sleep").length;
+    else awakePose = (awakePose + 1) % unlocked("awake").length;
   }
   if (!quiz && now > nextIdleQuiz) { nextIdleQuiz = now + 75; spawnQuiz(); }
   const cp = $("comboPill");
@@ -557,14 +832,7 @@ function tick(t) {
 
 $("catWrap").addEventListener("pointerdown", e => { e.preventDefault(); pet(); });
 $("quizBtn").addEventListener("click", spawnQuiz);
-$("poseBtn").addEventListener("click", () => {
-  const now = performance.now() / 1000;
-  if (sleeping) sleepPose = (sleepPose + 1) % SLEEP_POSES.length;
-  else awakePose = (awakePose + 1) % AWAKE_POSES.length;
-  nextPoseAt = now + 20 + Math.random() * 15;
-  initAudio();
-  tap();
-});
+$("hintBtn").addEventListener("click", showHint);
 $("quizClose").addEventListener("click", hideQuiz);
 [...$("quizOpts").children].forEach((b, i) => b.addEventListener("click", () => answer(i)));
 $("soundBtn").addEventListener("click", () => {
@@ -572,9 +840,30 @@ $("soundBtn").addEventListener("click", () => {
   if (S.sound) initAudio();
   refresh(); queueSave();
 });
+$("prestigeBtn").addEventListener("click", () => {
+  if (S.lives >= MAX_LIVES || S.runPets < prestigeReq()) return;
+  const n = S.lives + 1;
+  const sec = SECRETS[n - 1];
+  const nextMult = "×" + (Math.round((1 + LIFE_BONUS * n) * 100) / 100).toLocaleString("ru-RU");
+  if (!confirm("Новая жизнь №" + n + " из 9? 🌟\n\nНаграда: секрет №" + n + " «" + sec.t + "» в тайном альбоме 🔐" +
+    (sec.v ? " (кружок 🎬)" : "") +
+    (n === 9 ? "\nЭТО ФИНАЛ: тот самый запретный крупный план! 🙈" : "") +
+    "\n\nСбросится: лапки и прокачка этого забега.\nОстанется: тайный альбом, обычный альбом, имя, решённые задачки.\nБонус к лапкам навсегда: " + nextMult + ".")) return;
+  S.lives = n; S.pets = 0; S.runPets = 0; S.upg = {};
+  combo = 0; energy = 0; clicks = 0; shownScore = 0; sleeping = false;
+  S.secretNew = true;
+  hideQuiz();
+  say("🔐 Секрет №" + n + " открыт: «" + sec.t + "»! Загляни в тайный альбом 🔐");
+  play("levelup");
+  floatAtCat("🔐", "var(--amber)");
+  if (!reduced) { floatAtCat("✨", "var(--rose)"); floatAtCat(sec.v ? "🎬" : "📸", "var(--sage)"); }
+  refresh(); updateShop(); save();
+});
 $("resetBtn").addEventListener("click", () => {
-  if (!confirm("Начать заново? Лапки, прокачка и задачки обнулятся.\nИмя и звук останутся.")) return;
+  if (!confirm("Начать заново? Лапки, прокачка, задачки, оба альбома и все 9 секретов обнулятся.\nИмя и звук останутся.")) return;
   S.pets = 0; S.solved = 0; S.bestCombo = 0; S.upg = {};
+  S.totalPets = 0; S.runPets = 0; S.lives = 0; S.photo = null; S.albumNew = false; S.secretNew = false;
+  S.quizSeed = (Math.random() * 2 ** 31) >>> 0; S.quizPos = 0; quizOrderCache = null;
   combo = 0; energy = 0; clicks = 0; shownScore = 0; sleeping = false;
   hideQuiz();
   say("Новый ученик за партой! Мяу — начнём с первой лапки! 🐾");
@@ -592,9 +881,11 @@ window.addEventListener("keydown", e => {
   if (e.repeat) return;
   if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); pet(); }
   else if (e.code === "KeyQ") spawnQuiz();
+  else if (e.code === "KeyH") showHint();
   else if (e.code === "Digit1") answer(0);
   else if (e.code === "Digit2") answer(1);
   else if (e.code === "Digit3") answer(2);
+  else if (e.code === "Escape") { closeSecretView(); $("secretOverlay").hidden = true; $("albumOverlay").hidden = true; }
 });
 window.addEventListener("beforeunload", save);
 window.addEventListener("pagehide", save);
@@ -610,9 +901,116 @@ window.addEventListener("storage", e => {
     S.name = inc.name || null;
     S.sound = inc.sound !== false;
     S.upg = (inc.upg && typeof inc.upg === "object") ? inc.upg : {};
+    S.totalPets = Number(inc.totalPets) || 0;
+    S.runPets = Number(inc.runPets) || 0;
+    S.lives = Math.min(9, Math.max(0, Math.floor(Number(inc.lives) || 0)));
+    S.quizSeed = Number(inc.quizSeed) || S.quizSeed;
+    S.quizPos = Number(inc.quizPos) || 0;
+    S.photo = inc.photo || null;
+    S.albumNew = !!inc.albumNew;
+    S.secretNew = !!inc.secretNew;
+    quizOrderCache = null;
     refresh(); updateShop();
   } catch (err) {}
 });
+
+function renderAlbum() {
+  const grid = $("albumGrid");
+  grid.innerHTML = "";
+  let open = 0;
+  for (const p of PHOTOS) {
+    const isOpen = S.totalPets >= p.th;
+    if (isOpen) open++;
+    const cell = document.createElement("button");
+    cell.className = "ph" + (isOpen ? "" : " locked") + (S.photo === p.f ? " sel" : "");
+    cell.innerHTML = '<span class="ph-img"><img loading="lazy" src="assets/sprites/' + p.f + '" alt="' + (isOpen ? p.t : "Закрытое фото") + '">' +
+      (isOpen ? "" : '<span class="ph-lock">🔒<br>' + fmt(p.th) + ' 🐾</span>') + '</span>' +
+      '<span class="ph-t">' + (isOpen ? p.t : "???") + "</span>";
+    if (isOpen) cell.addEventListener("click", () => {
+      S.photo = p.f;
+      say("Поза: «" + p.t + "» 📸");
+      tap();
+      renderAlbum(); refresh(); queueSave();
+    });
+    else cell.disabled = true;
+    grid.appendChild(cell);
+  }
+  $("albumCount").textContent = open + "/" + PHOTOS.length;
+  $("albumAuto").classList.toggle("active", !S.photo);
+}
+$("poseBtn").addEventListener("click", () => {
+  S.albumNew = false;
+  renderAlbum();
+  $("albumOverlay").hidden = false;
+  refresh(); queueSave();
+  initAudio(); tap();
+});
+$("albumClose").addEventListener("click", () => { $("albumOverlay").hidden = true; });
+$("albumOverlay").addEventListener("click", e => { if (e.target === $("albumOverlay")) $("albumOverlay").hidden = true; });
+$("albumAuto").addEventListener("click", () => {
+  S.photo = null;
+  say("Саян снова меняет позы сам 🔀");
+  renderAlbum(); refresh(); queueSave();
+});
+
+function renderSecrets() {
+  const grid = $("secretGrid");
+  grid.innerHTML = "";
+  let open = 0;
+  SECRETS.forEach((p, i) => {
+    const n = i + 1;
+    const isOpen = S.lives >= n;
+    if (isOpen) open++;
+    const cell = document.createElement("button");
+    cell.className = "sec" + (isOpen ? "" : " locked") + (n === MAX_LIVES ? " final" : "");
+    cell.innerHTML = '<span class="sec-img"><img loading="lazy" src="assets/sprites/' + (p.p || p.f) + '" alt="' + (isOpen ? p.t : "Закрытый секрет") + '">' +
+      (isOpen && p.v ? '<span class="sec-play">▶</span>' : "") +
+      (isOpen ? "" : '<span class="sec-lock"><span class="n">🔒</span>Секрет №' + n + "<span>новая жизнь " + n + "</span></span>") + "</span>" +
+      '<span class="sec-t">' + (isOpen ? p.t : "???") + "</span>";
+    if (isOpen) cell.addEventListener("click", () => openSecret(i));
+    else cell.disabled = true;
+    grid.appendChild(cell);
+  });
+  $("secretCount").textContent = open + "/" + MAX_LIVES;
+}
+function openSecret(i) {
+  const p = SECRETS[i];
+  const vid = $("secretViewVid"), img = $("secretViewImg");
+  if (p.v) {
+    img.hidden = true;
+    vid.hidden = false;
+    vid.muted = true; vid.defaultMuted = true; vid.loop = true;
+    vid.poster = "assets/sprites/" + p.p;
+    vid.src = "assets/sprites/" + p.v;
+    vid.play().catch(() => {});
+  } else {
+    vid.hidden = true; vid.pause(); vid.removeAttribute("src"); vid.load();
+    img.hidden = false;
+    img.src = "assets/sprites/" + p.f;
+    img.alt = p.t;
+  }
+  $("secretViewT").textContent = (i === MAX_LIVES - 1 ? "👑 " : "🔐 ") + p.t;
+  $("secretViewS").textContent = p.s + " · секрет №" + (i + 1) + " из " + MAX_LIVES;
+  $("secretView").hidden = false;
+  tap();
+}
+function closeSecretView() {
+  $("secretViewVid").pause();
+  $("secretView").hidden = true;
+}
+$("secretBtn").addEventListener("click", () => {
+  const reveal = S.secretNew ? S.lives - 1 : -1;
+  S.secretNew = false;
+  renderSecrets();
+  $("secretOverlay").hidden = false;
+  refresh(); queueSave();
+  initAudio(); tap();
+  if (reveal >= 0) openSecret(reveal);
+});
+$("secretClose").addEventListener("click", () => { $("secretOverlay").hidden = true; });
+$("secretOverlay").addEventListener("click", e => { if (e.target === $("secretOverlay")) $("secretOverlay").hidden = true; });
+$("secretViewClose").addEventListener("click", closeSecretView);
+$("secretView").addEventListener("click", e => { if (e.target === $("secretView")) closeSecretView(); });
 
 const popupUrl = (() => {
   const u = new URL(location.href);
@@ -711,7 +1109,8 @@ function buy(u) {
 
 function exportCode() {
   const payload = { v: 1, pets: S.pets, solved: S.solved, bestCombo: S.bestCombo,
-    name: S.name, sound: S.sound, upg: S.upg, t: Date.now() };
+    name: S.name, sound: S.sound, upg: S.upg, totalPets: S.totalPets, runPets: S.runPets,
+    lives: S.lives, quizSeed: S.quizSeed, quizPos: S.quizPos, photo: S.photo, t: Date.now() };
   const bytes = new TextEncoder().encode(JSON.stringify(payload));
   let bin = "";
   for (const b of bytes) bin += String.fromCharCode(b);
@@ -732,6 +1131,14 @@ function importCode(code) {
     S.upg = {};
     if (o.upg && typeof o.upg === "object")
       for (const u of UPG) S.upg[u.id] = Math.min(u.max, Math.max(0, Math.floor(Number(o.upg[u.id]) || 0)));
+    S.totalPets = Math.max(S.pets, Number(o.totalPets) || 0);
+    S.runPets = Math.max(0, Number(o.runPets) || 0);
+    S.lives = Math.min(9, Math.max(0, Math.floor(Number(o.lives) || 0)));
+    S.quizSeed = Number(o.quizSeed) || S.quizSeed;
+    S.quizPos = Math.max(0, Math.floor(Number(o.quizPos) || 0));
+    S.photo = typeof o.photo === "string" ? o.photo : null;
+    if (S.photo && !PHOTOS.some(p => p.f === S.photo && S.totalPets >= p.th)) S.photo = null;
+    quizOrderCache = null;
     shownScore = S.pets;
     hideQuiz();
     refresh(); updateShop(); save();
@@ -759,7 +1166,7 @@ if (S.t && passiveRate() > 0) {
   if (away > 60) {
     const gain = Math.floor(passiveRate() * Math.min(away, 7200) * .5);
     if (gain > 0) {
-      S.pets += gain;
+      addPets(gain, true);
       shownScore = S.pets;
       offlineMsg = "Пока тебя не было, помощники намяли +" + fmt(gain) + " лапок 🐾";
     }
@@ -769,6 +1176,7 @@ if (S.t && passiveRate() > 0) {
 refresh();
 updateShop();
 if (offlineMsg) say(offlineMsg);
+else if (S.totalPets === 0 && S.lives === 0) say("🔐 Великая цель: 9 новых жизней откроют 9 секретов Саяна — кружки и финальное фото. Гладь кота и копи лапки!");
 refreshPin();
 requestAnimationFrame(tick);
 </script>
