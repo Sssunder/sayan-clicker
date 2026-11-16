@@ -279,6 +279,75 @@
   .grade-mix:disabled { opacity: .5; cursor: default; }
   #gradeBtn { user-select: none; -webkit-user-select: none; touch-action: manipulation; }
   .popup .grade { max-height: 92vh; }
+  #boardOverlay { position: fixed; inset: 0; z-index: 55; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.42); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); padding: 16px; }
+  #boardOverlay[hidden] { display: none; }
+  .board { width: min(430px, 100%); max-height: min(88vh, 720px); overflow: auto; animation: pop .25s ease-out; }
+  .board-title { font-size: 13px; font-weight: 800; color: var(--amber); }
+  #boardCount { font-size: 12px; font-weight: 700; color: var(--sage); }
+  .board-hint { font-size: 11.5px; color: var(--sub); margin-top: 6px; line-height: 1.4; }
+  .board-students-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; }
+  .board-filter-label { font-size: 11.5px; font-weight: 700; color: var(--sub); padding-top: 6px; flex-shrink: 0; }
+  .board-students { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+  .stu-chip { padding: 6px 11px; font-size: 11.5px; font-weight: 700; border-radius: 999px;
+    background: color-mix(in srgb, var(--pill) 70%, var(--card)); color: var(--sub); }
+  .stu-chip.active { background: color-mix(in srgb, var(--accent) 18%, var(--card)); color: var(--accent);
+    outline: 1.5px solid var(--accent); outline-offset: -1px; }
+  .stu-chip.add { background: color-mix(in srgb, var(--sage) 16%, var(--card)); color: var(--sage); }
+  .board-filter { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .board-filter label { font-size: 11.5px; font-weight: 700; color: var(--sub); }
+  #boardGrade { flex: 1; min-width: 0; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--pill-text);
+    background: var(--pill); border: 0; border-radius: 999px; padding: 7px 12px; cursor: pointer; }
+  #boardList { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .board-grade-head { font-size: 11px; font-weight: 800; color: var(--sage); margin: 6px 0 2px; }
+  .lb-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 14px;
+    background: color-mix(in srgb, var(--pill) 55%, var(--card)); }
+  .lb-row.you { outline: 2px solid var(--accent); outline-offset: -1px;
+    background: color-mix(in srgb, var(--accent) 12%, var(--card)); }
+  .lb-rank { width: 26px; text-align: center; font-size: 14px; font-weight: 800; color: var(--sub); flex-shrink: 0; }
+  .lb-rank.top { font-size: 17px; }
+  .lb-name { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-you { font-size: 10px; font-weight: 800; color: var(--accent); }
+  .lb-grade { font-size: 10.5px; font-weight: 700; color: var(--sub); flex-shrink: 0; }
+  .lb-score { text-align: right; flex-shrink: 0; line-height: 1.25; }
+  .lb-pts { font-size: 14px; font-weight: 800; color: var(--amber); font-variant-numeric: tabular-nums; }
+  .lb-pets { font-size: 10px; font-weight: 600; color: var(--sub); }
+  .lb-del { padding: 3px 7px; font-size: 12px; flex-shrink: 0; background: color-mix(in srgb, var(--rose) 14%, var(--card)); }
+  .lb-empty { font-size: 12px; color: var(--sub); text-align: center; padding: 18px 8px; line-height: 1.5; }
+  .board-foot { font-size: 10.5px; color: var(--sub); margin-top: 10px; line-height: 1.45; }
+  .board-account { display: flex; align-items: center; gap: 8px; margin-top: 10px;
+    background: color-mix(in srgb, var(--sage) 10%, var(--card)); border-radius: 12px; padding: 8px 10px; }
+  .board-ac-avatar { font-size: 22px; line-height: 1; }
+  .board-ac-name { font-size: 13px; font-weight: 800; color: var(--text); }
+  .board-ac-grade { font-size: 11px; font-weight: 600; color: var(--sub); }
+  .board-join { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .board-join-hint { font-size: 11px; color: var(--sub); }
+  .btn-accent { background: var(--accent); color: #fff; font-weight: 700; font-size: 13px;
+    border-radius: 12px; padding: 9px 14px; }
+  .btn-accent:disabled { opacity: .55; }
+  #authOverlay { position: fixed; inset: 0; z-index: 56; display: flex; align-items: center; justify-content: center;
+    background: color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter: blur(6px); padding: 14px; }
+  #authOverlay[hidden] { display: none; }
+  .auth { width: min(420px, 100%); max-height: 92vh; overflow-y: auto; }
+  .auth-tabs { display: flex; gap: 6px; margin-top: 10px; }
+  .auth-tab { flex: 1; padding: 8px 10px; font-size: 13px; font-weight: 700; border-radius: 10px;
+    background: color-mix(in srgb, var(--sub) 12%, var(--card)); color: var(--sub); }
+  .auth-tab.active { background: color-mix(in srgb, var(--accent) 16%, var(--card)); color: var(--accent); }
+  .auth-label { display: block; font-size: 11px; font-weight: 700; color: var(--sub); margin: 10px 0 4px; }
+  .auth-input { width: 100%; box-sizing: border-box; font-size: 14px; padding: 9px 11px; border-radius: 10px;
+    border: 1px solid color-mix(in srgb, var(--sub) 30%, var(--card)); background: var(--card); color: var(--text); }
+  .avatar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .avatar-cell { font-size: 20px; line-height: 1; padding: 7px 0; border-radius: 10px;
+    background: color-mix(in srgb, var(--sub) 10%, var(--card)); }
+  .avatar-cell.sel { background: color-mix(in srgb, var(--accent) 20%, var(--card));
+    outline: 2px solid var(--accent); }
+  .auth-error { margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--rose);
+    background: color-mix(in srgb, var(--rose) 12%, var(--card)); border-radius: 10px; padding: 8px 10px; }
+  .auth-submit { width: 100%; margin-top: 12px; }
+  .auth-note { font-size: 10.5px; color: var(--sub); margin-top: 8px; line-height: 1.45; }
+  .lb-avatar { font-size: 16px; line-height: 1; flex-shrink: 0; }
+  .popup .board { max-height: 92vh; }
   @media (max-width: 340px) {
     .pill { padding: 6px 10px; font-size: 12px; }
     .pill.icon { padding: 6px 8px; font-size: 12px; }
@@ -287,6 +356,9 @@
     .opts { flex-wrap: wrap; }
     #albumGrid { grid-template-columns: repeat(2, 1fr); }
     #secretGrid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .lb-name { font-size: 12px; }
+    .lb-row { gap: 7px; padding: 7px 8px; }
+    .stu-chip { font-size: 10.5px; padding: 5px 9px; }
   }
   @media (prefers-reduced-motion: reduce) {
     button { transition: none; }
@@ -303,9 +375,10 @@
     <div class="spacer"></div>
     <button class="pill icon" id="poseBtn" aria-label="Альбом фото" title="Альбом фото Саяна">🖼️</button>
     <button class="pill icon" id="secretBtn" aria-label="Тайный альбом" title="Тайный альбом: 8 кружков и финальное фото за 9 новых жизней">🔐</button>
+    <button class="pill icon" id="boardBtn" aria-label="Таблица лидеров класса" title="Таблица лидеров класса">🏆</button>
     <button class="pill icon" id="pinBtn" aria-label="Окошко поверх всех окон" aria-pressed="false" title="Открыть отдельное окошко поверх всех окон">📌</button>
     <button class="pill icon" id="soundBtn" aria-label="Звук">🔊</button>
-    <button class="pill icon" id="resetBtn" aria-label="Начать заново" title="Начать заново (новый ученик)">🔄</button>
+    <button class="pill icon" id="resetBtn" aria-label="Новый ученик" title="Новый ученик: свой прогресс, прежний останется в рейтинге">🔄</button>
     <button class="pill icon" id="closeBtn" aria-label="Закрыть окошко" title="Закрыть окошко">✕</button>
   </header>
   <div class="nameline" id="nameLine" hidden></div>
@@ -427,6 +500,82 @@
   </div>
 </div>
 
+<div id="boardOverlay" hidden>
+  <div class="card board" role="dialog" aria-label="Таблица лидеров класса">
+    <div class="row">
+      <span class="board-title">🏆 Лидеры класса</span>
+      <div class="spacer"></div>
+      <span id="boardCount">0</span>
+      <button class="quiz-close" id="boardClose" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="board-hint">Очки ⭐ = задачка ×10 + каждые 100 лапок ×1: считаем и задачки 📐, и клики 🐾 — мозг работает и там, и там. Рейтинг отдельно для каждого класса: первоклассник не соревнуется с одиннадцатиклассником.</div>
+    <div class="board-account" id="boardAccount" hidden>
+      <span class="board-ac-avatar" id="boardAcAvatar"></span>
+      <span class="board-ac-name" id="boardAcName"></span>
+      <span class="board-ac-grade" id="boardAcGrade"></span>
+      <div class="spacer"></div>
+      <button class="stu-chip" id="boardEditBtn" title="Сменить имя и аватарку">✏️</button>
+      <button class="stu-chip" id="boardLogoutBtn" title="Выйти из аккаунта">🚪</button>
+    </div>
+    <div class="board-join" id="boardJoinRow" hidden>
+      <button class="btn-accent" id="boardJoinBtn">🔑 Войти / зарегистрироваться</button>
+      <span class="board-join-hint">чтобы появиться в общей доске класса</span>
+    </div>
+    <div class="board-students-row" id="boardStudentsRow">
+      <span class="board-filter-label">Ученики:</span>
+      <div class="board-students" id="boardStudents"></div>
+    </div>
+    <div class="board-filter">
+      <label for="boardGrade">Класс:</label>
+      <select id="boardGrade"></select>
+    </div>
+    <div id="boardList"></div>
+    <div class="board-foot" id="boardFoot">Это доска данного компьютера/доски: у каждого ученика свой прогресс, рейтинг собирается сам — без кодов. Переключайся чипами «Ученики», добавляй новых кнопкой ＋, убирай лишних 🗑 в строке. Имя ученика — клик по заголовку «🐾 Кот Саян».</div>
+  </div>
+</div>
+
+<div id="authOverlay" hidden>
+  <div class="card auth" role="dialog" aria-label="Вход в класс">
+    <div class="row">
+      <span class="board-title" id="authTitle">🔑 Вход в класс</span>
+      <div class="spacer"></div>
+      <button class="quiz-close" id="authClose" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="auth-tabs" id="authTabs">
+      <button class="auth-tab" id="authTabLogin">Вход</button>
+      <button class="auth-tab" id="authTabRegister">Регистрация</button>
+    </div>
+    <div id="authLoginFields">
+      <label class="auth-label" for="loginU">Логин</label>
+      <input class="auth-input" id="loginU" autocomplete="username" maxlength="32" placeholder="например, masha2014">
+      <label class="auth-label" for="loginP">Пароль</label>
+      <input class="auth-input" id="loginP" type="password" autocomplete="current-password" maxlength="64" placeholder="твой пароль">
+    </div>
+    <div id="authRegisterFields" hidden>
+      <label class="auth-label" for="regName">Имя в рейтинге</label>
+      <input class="auth-input" id="regName" maxlength="40" placeholder="например, Маша">
+      <label class="auth-label" for="regU">Логин (латиница, цифры, _ -)</label>
+      <input class="auth-input" id="regU" autocomplete="username" maxlength="32" placeholder="например, masha2014">
+      <label class="auth-label" for="regP">Пароль (минимум 6 символов)</label>
+      <input class="auth-input" id="regP" type="password" autocomplete="new-password" maxlength="64" placeholder="придумай пароль">
+      <label class="auth-label" for="regGrade">Класс</label>
+      <select class="auth-input" id="regGrade"></select>
+      <label class="auth-label">Аватарка</label>
+      <div class="avatar-grid" id="regAvatar"></div>
+    </div>
+    <div id="authProfileFields" hidden>
+      <label class="auth-label" for="profName">Имя в рейтинге</label>
+      <input class="auth-input" id="profName" maxlength="40">
+      <label class="auth-label">Аватарка</label>
+      <div class="avatar-grid" id="profAvatar"></div>
+      <div class="auth-note" id="profGradeNote"></div>
+    </div>
+    <div class="auth-error" id="authError" hidden></div>
+    <button class="btn-accent auth-submit" id="authSubmit">Войти</button>
+    <div class="auth-note">Аккаунт нужен только для общей доски класса. Прогресс хранится и на этом устройстве тоже.</div>
+  </div>
+</div>
+
 <script src="quiz-data.js"></script>
 <script>
 "use strict";
@@ -447,6 +596,41 @@ if (raw.totalPets === undefined) { S.totalPets = S.pets; S.runPets = S.pets; }
 if (!S.quizSeed) S.quizSeed = (Math.random() * 2 ** 31) >>> 0;
 S.lives = Math.min(9, Math.max(0, Math.floor(Number(S.lives) || 0)));
 S.grade = (S.grade === 0 || (Number.isInteger(S.grade) && S.grade >= 1 && S.grade <= 11)) ? S.grade : null;
+
+// ---- Класс на этом устройстве: реестр профилей учеников (без кодов) ----
+const CLASS_KEY = "sayan_web_class_v1";
+const classStore = {
+  get() { try { const o = JSON.parse(localStorage.getItem(CLASS_KEY) || "null"); return (o && Array.isArray(o.students) && o.students.length) ? o : null; } catch (e) { return null; } },
+  set(v) { try { localStorage.setItem(CLASS_KEY, JSON.stringify(v)); } catch (e) {} },
+};
+const newId = () => "s" + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+const snapshot = () => JSON.parse(JSON.stringify(S));
+const blankSave = () => ({ pets: 0, solved: 0, bestCombo: 0, name: null, sound: S.sound, upg: {}, t: Date.now(),
+  totalPets: 0, runPets: 0, lives: 0, quizSeed: (Math.random() * 2 ** 31) >>> 0, quizPos: 0, photo: null,
+  albumNew: false, secretNew: false, grade: null });
+let CLASS = classStore.get();
+if (!CLASS) { CLASS = { active: newId(), students: [{ id: newId(), data: snapshot() }] }; CLASS.active = CLASS.students[0].id; classStore.set(CLASS); }
+if (!CLASS.students.some(s => s.id === CLASS.active)) CLASS.active = CLASS.students[0].id;
+const activeStudent = () => CLASS.students.find(s => s.id === CLASS.active) || CLASS.students[0];
+function applySave(o) {
+  o = o || {};
+  S.pets = Math.max(0, Number(o.pets) || 0);
+  S.solved = Math.max(0, Number(o.solved) || 0);
+  S.bestCombo = Math.max(0, Number(o.bestCombo) || 0);
+  S.name = typeof o.name === "string" ? o.name.slice(0, 40) : null;
+  S.sound = o.sound !== false;
+  S.upg = (o.upg && typeof o.upg === "object") ? o.upg : {};
+  S.totalPets = Math.max(S.pets, Number(o.totalPets) || 0);
+  S.runPets = Math.max(0, Number(o.runPets) || 0);
+  S.lives = Math.min(9, Math.max(0, Math.floor(Number(o.lives) || 0)));
+  S.quizSeed = Number(o.quizSeed) || S.quizSeed;
+  S.quizPos = Math.max(0, Math.floor(Number(o.quizPos) || 0));
+  S.photo = typeof o.photo === "string" ? o.photo : null;
+  S.albumNew = !!o.albumNew; S.secretNew = !!o.secretNew;
+  S.grade = (o.grade === 0 || (Number.isInteger(o.grade) && o.grade >= 1 && o.grade <= 11)) ? o.grade : null;
+}
+applySave(activeStudent().data);
+function classMirror() { activeStudent().data = snapshot(); classStore.set(CLASS); }
 
 const SLEEP_IDLE = 18;
 const ZOOMIES_SECONDS = 6, ZOOMIES_COOLDOWN = 35, QUIZ_CADENCE = 26;
@@ -643,6 +827,8 @@ function floatAtCat(text, color) {
 function save() {
   S.t = Date.now();
   store.set(JSON.stringify(S));
+  classMirror();
+  scheduleSync();
 }
 function queueSave() {
   if (saveTimer) return;
@@ -915,17 +1101,7 @@ $("prestigeBtn").addEventListener("click", () => {
   if (!reduced) { floatAtCat("✨", "var(--rose)"); floatAtCat(sec.v ? "🎬" : "📸", "var(--sage)"); }
   refresh(); updateShop(); save();
 });
-$("resetBtn").addEventListener("click", () => {
-  if (!confirm("Начать заново? Лапки, прокачка, задачки, оба альбома и все 9 секретов обнулятся.\nИмя и звук останутся.")) return;
-  S.pets = 0; S.solved = 0; S.bestCombo = 0; S.upg = {};
-  S.totalPets = 0; S.runPets = 0; S.lives = 0; S.photo = null; S.albumNew = false; S.secretNew = false; S.grade = null;
-  S.quizSeed = (Math.random() * 2 ** 31) >>> 0; S.quizPos = 0; quizOrderCache = null;
-  combo = 0; energy = 0; clicks = 0; shownScore = 0; sleeping = false;
-  hideQuiz();
-  say("Новый ученик за партой! Мяу — начнём с первой лапки! 🐾");
-  play("meow");
-  refresh(); updateShop(); save(); openGrade();
-});
+$("resetBtn").addEventListener("click", () => { addStudent(); });
 $("titleBtn").addEventListener("click", () => {
   const name = prompt("Как тебя зовут? Имя появится под заголовком.", S.name || "");
   if (name === null) return;
@@ -968,6 +1144,7 @@ function chooseGrade(g) {
   $("gradeOverlay").hidden = true;
   say(g ? "Задачки для " + g + " класса! Саян готов 🎓" : "Микс из всех классов! Саян готов 🎓");
   refresh(); queueSave();
+  if (!$("boardOverlay").hidden) { renderStudents(); fillBoardGrades(); renderBoard(); }
 }
 let gradePressTimer = null, gradeLongFired = false;
 const gradeBtnEl = $("gradeBtn");
@@ -989,9 +1166,407 @@ gradeBtnEl.addEventListener("keydown", e => {
 });
 $("gradeMix").addEventListener("click", () => chooseGrade(0));
 $("gradeClose").addEventListener("click", () => { if (S.grade !== null) $("gradeOverlay").hidden = true; });
+
+// ---- Таблица лидеров класса: профили учеников этого устройства, без кодов ----
+const boardScore = e => e.solved * 10 + Math.floor(e.totalPets / 100);
+function boardEntries() {
+  return CLASS.students.map(st => {
+    if (st.id === CLASS.active) return { id: st.id, name: (S.name || "").trim() || "Ученик",
+      grade: S.grade === null ? 0 : S.grade, solved: S.solved, totalPets: S.totalPets,
+      avatar: (NET.user && NET.user.avatar) || NET_AVATARS[0], you: true };
+    const d = st.data || {};
+    return { id: st.id, name: (typeof d.name === "string" && d.name.trim()) ? d.name.trim() : "Ученик",
+      grade: (d.grade === 0 || (Number.isInteger(d.grade) && d.grade >= 1 && d.grade <= 11)) ? d.grade : 0,
+      solved: Math.max(0, Math.floor(Number(d.solved) || 0)),
+      totalPets: Math.max(0, Math.floor(Number(d.totalPets) || 0)),
+      avatar: NET_AVATARS[Math.abs(st.id.charCodeAt(1) || 0) % NET_AVATARS.length], you: false };
+  });
+}
+function resetTransients() {
+  combo = 0; energy = 0; clicks = 0; shownScore = S.pets; sleeping = false;
+  quizOrderCache = null; hideQuiz();
+}
+function switchStudent(id) {
+  if (id === CLASS.active) return;
+  const target = CLASS.students.find(s => s.id === id);
+  if (!target) return;
+  classMirror();
+  CLASS.active = id; classStore.set(CLASS);
+  applySave(target.data);
+  if (S.photo && !PHOTOS.some(p => p.f === S.photo && S.totalPets >= p.th)) S.photo = null;
+  resetTransients();
+  refresh(); updateShop(); save();
+  if (!$("albumOverlay").hidden) renderAlbum();
+  if (!$("secretOverlay").hidden) renderSecrets();
+  if (!$("gradeOverlay").hidden) renderGradeGrid();
+  say("За партой: " + (S.name || "новый ученик") + " 🐾");
+  renderStudents(); fillBoardGrades(); renderBoard();
+}
+function addStudent() {
+  classMirror();
+  const st = { id: newId(), data: blankSave() };
+  CLASS.students.push(st); CLASS.active = st.id; classStore.set(CLASS);
+  applySave(st.data);
+  resetTransients();
+  const name = prompt("Как зовут нового ученика? Имя появится в рейтинге.", "");
+  if (name !== null) S.name = name.trim().slice(0, 40) || null;
+  refresh(); updateShop(); save();
+  renderStudents(); fillBoardGrades(); renderBoard();
+  say("Новый ученик за партой! Мяу — начнём с первой лапки! 🐾");
+  play("meow");
+  openGrade();
+}
+function removeStudent(id) {
+  if (CLASS.students.length <= 1) { say("Это последний ученик — его нельзя удалить 🙈"); return; }
+  const st = CLASS.students.find(s => s.id === id);
+  if (!st) return;
+  if (!confirm("Удалить ученика «" + ((st.data && st.data.name) || "Ученик") + "» и его прогресс с этого устройства?")) return;
+  const wasActive = id === CLASS.active;
+  if (wasActive) {
+    const other = CLASS.students.find(s => s.id !== id);
+    CLASS.active = other.id; applySave(other.data); resetTransients();
+  }
+  CLASS.students = CLASS.students.filter(s => s.id !== id);
+  classStore.set(CLASS);
+  refresh(); updateShop(); save();
+  renderStudents(); if (wasActive) fillBoardGrades(); renderBoard();
+  say("Ученик удалён 🧹");
+}
+function renderStudents() {
+  const wrap = $("boardStudents"); wrap.innerHTML = "";
+  for (const st of CLASS.students) {
+    const d = st.id === CLASS.active ? S : (st.data || {});
+    const nm = (typeof d.name === "string" && d.name.trim()) ? d.name.trim() : "Ученик";
+    const g = (d.grade === 0 || (Number.isInteger(d.grade) && d.grade >= 1 && d.grade <= 11)) ? d.grade : null;
+    const b = document.createElement("button");
+    b.className = "stu-chip" + (st.id === CLASS.active ? " active" : "");
+    b.textContent = nm + (g === null ? "" : " · " + (g === 0 ? "микс" : g + " кл"));
+    b.title = st.id === CLASS.active ? "Сейчас за партой" : "Переключиться на этого ученика";
+    b.addEventListener("click", () => switchStudent(st.id));
+    wrap.appendChild(b);
+  }
+  const add = document.createElement("button");
+  add.className = "stu-chip add"; add.textContent = "＋ Новый";
+  add.title = "Добавить ученика на это устройство";
+  add.addEventListener("click", addStudent);
+  wrap.appendChild(add);
+}
+function renderBoard() {
+  if (NET.available) { renderBoardOnline(); return; }
+  const filter = $("boardGrade").value === "all" ? "all" : Number($("boardGrade").value);
+  const byGrade = new Map();
+  for (const e of boardEntries()) { if (!byGrade.has(e.grade)) byGrade.set(e.grade, []); byGrade.get(e.grade).push(e); }
+  const list = $("boardList"); list.innerHTML = "";
+  const medal = r => r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : String(r);
+  const plural = (n, one, few, many) => { const a = n % 10, b = n % 100;
+    return n + " " + (a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? few : many); };
+  let shown = 0;
+  for (const g of [...byGrade.keys()].sort((a, b) => a - b)) {
+    if (filter !== "all" && g !== filter) continue;
+    const rows = byGrade.get(g).sort((a, b) => boardScore(b) - boardScore(a) || b.solved - a.solved || b.totalPets - a.totalPets || a.name.localeCompare(b.name, "ru"));
+    if (filter === "all") {
+      const head = document.createElement("div"); head.className = "board-grade-head";
+      head.textContent = g === 0 ? "🎓 Микс" : "🎓 " + g + " класс";
+      list.appendChild(head);
+    }
+    rows.forEach((e, i) => {
+      shown++;
+      const row = document.createElement("div"); row.className = "lb-row" + (e.you ? " you" : "");
+      const rank = document.createElement("span"); rank.className = "lb-rank" + (i < 3 ? " top" : ""); rank.textContent = medal(i + 1);
+      const av = document.createElement("span"); av.className = "lb-avatar"; av.textContent = e.avatar || NET_AVATARS[0];
+      const name = document.createElement("span"); name.className = "lb-name"; name.textContent = e.name;
+      if (e.you) { const y = document.createElement("span"); y.className = "lb-you"; y.textContent = " (ты)"; name.appendChild(y); }
+      row.append(rank, av, name);
+      if (filter === "all") { const gb = document.createElement("span"); gb.className = "lb-grade"; gb.textContent = g === 0 ? "микс" : "🎓" + g; row.appendChild(gb); }
+      const score = document.createElement("span"); score.className = "lb-score";
+      const pts = document.createElement("span"); pts.className = "lb-pts"; pts.textContent = "⭐ " + fmt(boardScore(e));
+      const sub = document.createElement("span"); sub.className = "lb-pets"; sub.textContent = "📐 " + fmt(e.solved) + " · 🐾 " + fmt(e.totalPets);
+      score.append(pts, document.createElement("br"), sub);
+      row.appendChild(score);
+      if (!e.you) {
+        const del = document.createElement("button"); del.className = "lb-del"; del.textContent = "🗑";
+        del.title = "Удалить ученика с этого устройства"; del.setAttribute("aria-label", "Удалить ученика " + e.name);
+        del.addEventListener("click", () => removeStudent(e.id));
+        row.appendChild(del);
+      }
+      list.appendChild(row);
+    });
+  }
+  if (!shown) {
+    const empty = document.createElement("div"); empty.className = "lb-empty";
+    empty.textContent = filter === "all"
+      ? "Пока никого. Реши задачку 📐 или погладь кота 🐾 — и ты появишься в рейтинге!"
+      : "В этом классе пока никого. Добавь ученика кнопкой ＋ или выбери другой класс.";
+    list.appendChild(empty);
+  }
+  $("boardCount").textContent = plural(shown, "игрок", "игрока", "игроков");
+}
+function fillBoardGrades() {
+  const sel = $("boardGrade"); sel.innerHTML = "";
+  const all = document.createElement("option"); all.value = "all"; all.textContent = "Все классы"; sel.appendChild(all);
+  for (const g of GRADE_KEYS) { const o = document.createElement("option"); o.value = String(g); o.textContent = g + " класс"; sel.appendChild(o); }
+  const mix = document.createElement("option"); mix.value = "0"; mix.textContent = "Микс"; sel.appendChild(mix);
+  sel.value = S.grade === null ? "all" : String(S.grade);
+}
+function openBoard() {
+  if (NET.available) {
+    updateAccountBar(); fillBoardGrades(); $("boardOverlay").hidden = false;
+    fetchBoard().then(renderBoard); scheduleSync();
+    return;
+  }
+  renderStudents(); fillBoardGrades(); renderBoard(); $("boardOverlay").hidden = false;
+}
+$("boardBtn").addEventListener("click", () => { initAudio(); tap(); openBoard(); });
+$("boardClose").addEventListener("click", () => { $("boardOverlay").hidden = true; });
+$("boardGrade").addEventListener("change", renderBoard);
+
+// ---- Онлайн-класс: общая доска на Supabase. Без сервера — офлайн-доска устройства. ----
+const NET_AVATARS = [
+  "\u{1F431}", "\u{1F408}", "\u{1F408}\u{200D}\u{2B1B}", "\u{1F981}", "\u{1F42F}", "\u{1F406}",
+  "\u{1F98A}", "\u{1F43A}", "\u{1F43B}", "\u{1F43C}", "\u{1F428}", "\u{1F430}",
+  "\u{1F439}", "\u{1F42D}", "\u{1F984}", "\u{1F432}", "\u{1F43E}", "\u{2B50}", "\u{1F525}",
+];
+// ⬇ Supabase: замени на свой project-ref и anon key
+const SUPA_FN = "https://ngsonqwylcwcziwxurkc.supabase.co/functions/v1/sayan";
+const NET = { available: false, user: null, board: null, syncTimer: 0 };
+const OFFLINE_FOOT = "Это доска данного компьютера/доски: у каждого ученика свой прогресс, рейтинг собирается сам — без кодов. Переключайся чипами «Ученики», добавляй новых кнопкой ＋, убирай лишних 🗑 в строке. Имя ученика — клик по заголовку «🐾 Кот Саян».";
+
+async function netFetch(path, opts = {}) {
+  const headers = { Accept: "application/json" };
+  if (opts.body !== undefined) headers["content-type"] = "application/json";
+  const res = await fetch(SUPA_FN + path, {
+    method: opts.method || "GET", headers, credentials: "include",
+    body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+  });
+  let data = null;
+  try { data = await res.json(); } catch {}
+  return { status: res.status, data };
+}
+function netMsg(code) {
+  const m = {
+    username_taken: "Такой логин уже занят — придумай другой.",
+    invalid_credentials: "Неверный логин или пароль.",
+    invalid_username: "Логин: 3–32 символа, латиница/цифры/_/-, с буквы или цифры.",
+    invalid_password: "Пароль минимум 6 символов.",
+    invalid_name: "Введи имя (до 40 символов).",
+    invalid_avatar: "Выбери аватарку из списка.",
+    invalid_grade: "Выбери класс.",
+    rate_limited: "Слишком много попыток. Подожди немного.",
+    login_required: "Сессия истекла — войди снова.",
+  };
+  return m[code] || "Сервер класса недоступен или запрос не прошёл. Попробуй позже.";
+}
+async function probeNet() {
+  try { const r = await netFetch("/api/health"); return r.status === 200 && !!r.data && r.data.ok === true; }
+  catch { return false; }
+}
+function mergeServerUser(u) {
+  if (!u) return;
+  S.solved = Math.max(S.solved, u.solved || 0);
+  S.totalPets = Math.max(S.totalPets, u.totalPets || 0);
+  S.bestCombo = Math.max(S.bestCombo, u.bestCombo || 0);
+  if (typeof u.name === "string" && u.name.trim()) S.name = u.name.trim().slice(0, 40);
+  const committed = S.grade !== null && S.grade !== 0;
+  const g = u.grade;
+  if (!(committed && (g === 0 || g < S.grade))) S.grade = (g === 0 || (Number.isInteger(g) && g >= 1 && g <= 11)) ? g : S.grade;
+  refresh(); updateShop(); save();
+}
+async function refreshMe() {
+  const r = await netFetch("/api/me");
+  if (r.status === 200 && r.data && r.data.user) { NET.user = r.data.user; mergeServerUser(NET.user); }
+  else NET.user = null;
+}
+function syncPayload() {
+  return { solved: S.solved, totalPets: S.totalPets, bestCombo: S.bestCombo,
+    grade: S.grade === null ? 0 : S.grade,
+    displayName: (S.name || (NET.user && NET.user.name) || "Ученик"),
+    avatar: (NET.user && NET.user.avatar) || NET_AVATARS[0] };
+}
+async function doSync() {
+  if (!NET.available || !NET.user) return;
+  const r = await netFetch("/api/sync", { method: "POST", body: syncPayload() });
+  if (r.status === 200 && r.data && r.data.user) { NET.user = r.data.user; updateAccountBar(); if (!$("boardOverlay").hidden) renderBoard(); }
+  else if (r.status === 401) { NET.user = null; updateAccountBar(); if (!$("boardOverlay").hidden) renderBoard(); }
+}
+function scheduleSync() {
+  if (!NET.available || !NET.user || NET.syncTimer) return;
+  NET.syncTimer = setTimeout(() => { NET.syncTimer = 0; doSync(); }, 1500);
+}
+function syncKeepalive() {
+  if (!NET.available || !NET.user) return;
+  try {
+    fetch(SUPA_FN + "/api/sync", { method: "POST", credentials: "include", keepalive: true,
+      headers: { "content-type": "application/json", Accept: "application/json" }, body: JSON.stringify(syncPayload()) });
+  } catch {}
+}
+async function fetchBoard() {
+  const r = await netFetch("/api/board");
+  NET.board = (r.status === 200 && r.data && Array.isArray(r.data.players)) ? r.data.players : [];
+}
+function updateAccountBar() {
+  const on = NET.available;
+  $("boardStudentsRow").hidden = on;
+  $("boardAccount").hidden = !(on && NET.user);
+  $("boardJoinRow").hidden = !(on && !NET.user);
+  if (on && NET.user) {
+    $("boardAcAvatar").textContent = NET.user.avatar || NET_AVATARS[0];
+    $("boardAcName").textContent = NET.user.name || "Ученик";
+    $("boardAcGrade").textContent = NET.user.grade === 0 ? "микс" : NET.user.grade + " кл";
+  }
+  $("boardFoot").textContent = on
+    ? (NET.user
+      ? "Общая доска класса (Supabase): каждый заходит со своего устройства под своим логином и попадает сюда сам. Очки синхронизируются автоматически. ✏️ — имя и аватарка, 🚪 — выйти."
+      : "Общая доска класса (Supabase): зарегистрируйся со своего устройства — и твой прогресс появится в рейтинге класса сам!")
+    : OFFLINE_FOOT;
+}
+function renderBoardOnline() {
+  const filter = $("boardGrade").value === "all" ? "all" : Number($("boardGrade").value);
+  const byGrade = new Map();
+  for (const e of (NET.board || [])) { if (!byGrade.has(e.grade)) byGrade.set(e.grade, []); byGrade.get(e.grade).push(e); }
+  const list = $("boardList"); list.innerHTML = "";
+  const medal = r => r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : String(r);
+  const plural = (n, one, few, many) => { const a = n % 10, b = n % 100;
+    return n + " " + (a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? few : many); };
+  let shown = 0;
+  for (const g of [...byGrade.keys()].sort((a, b) => a - b)) {
+    if (filter !== "all" && g !== filter) continue;
+    if (filter === "all") {
+      const head = document.createElement("div"); head.className = "board-grade-head";
+      head.textContent = g === 0 ? "🎓 Микс" : "🎓 " + g + " класс";
+      list.appendChild(head);
+    }
+    byGrade.get(g).forEach((e, i) => {
+      shown++;
+      const you = !!(NET.user && e.id === NET.user.id);
+      const row = document.createElement("div"); row.className = "lb-row" + (you ? " you" : "");
+      const rank = document.createElement("span"); rank.className = "lb-rank" + (i < 3 ? " top" : ""); rank.textContent = medal(i + 1);
+      const av = document.createElement("span"); av.className = "lb-avatar"; av.textContent = e.avatar || NET_AVATARS[0];
+      const name = document.createElement("span"); name.className = "lb-name"; name.textContent = e.name;
+      if (you) { const y = document.createElement("span"); y.className = "lb-you"; y.textContent = " (ты)"; name.appendChild(y); }
+      row.append(rank, av, name);
+      if (filter === "all") { const gb = document.createElement("span"); gb.className = "lb-grade"; gb.textContent = g === 0 ? "микс" : "🎓" + g; row.appendChild(gb); }
+      const score = document.createElement("span"); score.className = "lb-score";
+      const pts = document.createElement("span"); pts.className = "lb-pts"; pts.textContent = "⭐ " + fmt(e.score);
+      const sub = document.createElement("span"); sub.className = "lb-pets"; sub.textContent = "📐 " + fmt(e.solved) + " · 🐾 " + fmt(e.totalPets);
+      score.append(pts, document.createElement("br"), sub);
+      row.appendChild(score);
+      list.appendChild(row);
+    });
+  }
+  if (!shown) {
+    const empty = document.createElement("div"); empty.className = "lb-empty";
+    empty.textContent = NET.user
+      ? "В этом классе пока никого. Реши задачку 📐 или погладь кота 🐾 — очки улетят в доску сами!"
+      : "Пока никто не зарегистрировался. Нажми «Войти / зарегистрироваться» и стань первым! 🌟";
+    list.appendChild(empty);
+  }
+  $("boardCount").textContent = plural(shown, "игрок", "игрока", "игроков");
+}
+
+// ---- Auth overlay (вход / регистрация / профиль) ----
+let authMode = "login";
+let regAvatarSel = NET_AVATARS[0];
+let profAvatarSel = NET_AVATARS[0];
+function buildAvatarGrid(el, sel, onPick) {
+  el.innerHTML = "";
+  for (const a of NET_AVATARS) {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "avatar-cell" + (a === sel ? " sel" : ""); b.textContent = a;
+    b.setAttribute("aria-label", "Аватарка " + a);
+    b.addEventListener("click", () => onPick(a));
+    el.appendChild(b);
+  }
+}
+const regPick = a => { regAvatarSel = a; buildAvatarGrid($("regAvatar"), regAvatarSel, regPick); };
+const profPick = a => { profAvatarSel = a; buildAvatarGrid($("profAvatar"), profAvatarSel, profPick); };
+function fillRegGrade() {
+  const sel = $("regGrade"); sel.innerHTML = "";
+  for (const g of GRADE_KEYS) { const o = document.createElement("option"); o.value = String(g); o.textContent = g + " класс"; sel.appendChild(o); }
+  const mix = document.createElement("option"); mix.value = "0"; mix.textContent = "Микс (все классы)"; sel.appendChild(mix);
+  sel.value = String(S.grade === null ? 3 : S.grade);
+}
+function setAuthMode(mode) {
+  authMode = mode;
+  $("authTabs").hidden = mode === "profile";
+  $("authLoginFields").hidden = mode !== "login";
+  $("authRegisterFields").hidden = mode !== "register";
+  $("authProfileFields").hidden = mode !== "profile";
+  $("authTabLogin").classList.toggle("active", mode === "login");
+  $("authTabRegister").classList.toggle("active", mode === "register");
+  $("authTitle").textContent = mode === "register" ? "🌟 Регистрация" : mode === "profile" ? "✏️ Имя и аватарка" : "🔑 Вход в класс";
+  $("authSubmit").textContent = mode === "register" ? "Зарегистрироваться" : mode === "profile" ? "Сохранить" : "Войти";
+  $("authError").hidden = true;
+  if (mode === "register") { fillRegGrade(); buildAvatarGrid($("regAvatar"), regAvatarSel, regPick); }
+  if (mode === "profile") {
+    $("profName").value = (NET.user && NET.user.name) || S.name || "";
+    profAvatarSel = (NET.user && NET.user.avatar) || NET_AVATARS[0];
+    buildAvatarGrid($("profAvatar"), profAvatarSel, profPick);
+    const g = NET.user ? NET.user.grade : S.grade;
+    $("profGradeNote").textContent = "Класс: " + (g === 0 ? "микс" : g + " кл") + ". Класс можно менять только вверх — защита от фарма лёгких задачек.";
+  }
+}
+function openAuth(mode) { setAuthMode(mode); $("authOverlay").hidden = false; }
+function closeAuth() { $("authOverlay").hidden = true; }
+function authFail(code) {
+  const el = $("authError");
+  el.textContent = netMsg(code);
+  el.hidden = false;
+}
+async function authSubmit() {
+  const btn = $("authSubmit");
+  btn.disabled = true;
+  let r;
+  try {
+    if (authMode === "login") {
+      r = await netFetch("/api/login", { method: "POST", body: { username: $("loginU").value, password: $("loginP").value } });
+    } else if (authMode === "register") {
+      r = await netFetch("/api/register", { method: "POST", body: {
+        username: $("regU").value, password: $("regP").value, displayName: $("regName").value,
+        grade: Number($("regGrade").value), avatar: regAvatarSel } });
+    } else {
+      r = await netFetch("/api/sync", { method: "POST", body: Object.assign(syncPayload(), { displayName: $("profName").value, avatar: profAvatarSel }) });
+    }
+  } catch { r = { status: 0, data: null }; }
+  btn.disabled = false;
+  const code = r.data && typeof r.data.error === "string" ? r.data.error : null;
+  if ((r.status === 200 || r.status === 201) && r.data && r.data.user) {
+    NET.user = r.data.user;
+    if (authMode !== "profile") mergeServerUser(NET.user);
+    else { S.name = NET.user.name; refresh(); save(); }
+    closeAuth(); updateAccountBar();
+    if (!$("boardOverlay").hidden) { fetchBoard().then(renderBoard); }
+    say(authMode === "register" ? "Ура! Ты в классе 🌟 Твои очки теперь в общей доске!" : authMode === "profile" ? "Обновил имя и аватарку ✏️" : "С возвращением, " + (NET.user.name || "ученик") + "! 🐾");
+    play("meow");
+    doSync();
+    return;
+  }
+  authFail(code);
+}
+$("authSubmit").addEventListener("click", authSubmit);
+$("authClose").addEventListener("click", closeAuth);
+$("authTabLogin").addEventListener("click", () => setAuthMode("login"));
+$("authTabRegister").addEventListener("click", () => setAuthMode("register"));
+$("boardJoinBtn").addEventListener("click", () => { initAudio(); tap(); openAuth("register"); });
+$("boardEditBtn").addEventListener("click", () => openAuth("profile"));
+$("boardLogoutBtn").addEventListener("click", async () => {
+  await netFetch("/api/logout", { method: "POST" });
+  NET.user = null; updateAccountBar();
+  if (!$("boardOverlay").hidden) renderBoard();
+  say("Вышли из аккаунта 👋 Прогресс остался на этом устройстве.");
+});
+async function initNet() {
+  const ok = await probeNet();
+  NET.available = ok;
+  if (ok) { await refreshMe(); if (NET.user) await doSync(); }
+  updateAccountBar();
+  $("resetBtn").hidden = ok;
+  if (!$("boardOverlay").hidden) { fillBoardGrades(); if (ok) fetchBoard().then(renderBoard); else renderBoard(); }
+}
+
 window.addEventListener("keydown", e => {
   if (e.repeat) return;
   if (!$("gradeOverlay").hidden) { if (e.code === "Escape" && S.grade !== null) $("gradeOverlay").hidden = true; return; }
+  if (!$("boardOverlay").hidden) { if (e.code === "Escape") $("boardOverlay").hidden = true; return; }
   if (e.code === "Space") { e.preventDefault(); pet(); }
   else if (e.code === "Enter") { e.preventDefault(); if (quiz && reviewing) { hideQuiz(); spawnQuiz(); } else pet(); }
   else if (e.code === "KeyQ") spawnQuiz();
@@ -1001,33 +1576,29 @@ window.addEventListener("keydown", e => {
   else if (e.code === "Digit3") answer(2);
   else if (e.code === "Escape") { closeSecretView(); $("secretOverlay").hidden = true; $("albumOverlay").hidden = true; }
 });
-window.addEventListener("beforeunload", save);
+window.addEventListener("beforeunload", () => { save(); syncKeepalive(); });
 window.addEventListener("pagehide", save);
 document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
 
 window.addEventListener("storage", e => {
-  if (e.key !== SAVE_KEY || !e.newValue) return;
-  try {
-    const inc = JSON.parse(e.newValue);
-    S.pets = Number(inc.pets) || 0;
-    S.solved = Number(inc.solved) || 0;
-    S.bestCombo = Number(inc.bestCombo) || 0;
-    S.name = inc.name || null;
-    S.sound = inc.sound !== false;
-    S.upg = (inc.upg && typeof inc.upg === "object") ? inc.upg : {};
-    S.totalPets = Number(inc.totalPets) || 0;
-    S.runPets = Number(inc.runPets) || 0;
-    S.lives = Math.min(9, Math.max(0, Math.floor(Number(inc.lives) || 0)));
-    S.quizSeed = Number(inc.quizSeed) || S.quizSeed;
-    S.quizPos = Number(inc.quizPos) || 0;
-    S.photo = inc.photo || null;
-    S.albumNew = !!inc.albumNew;
-    S.secretNew = !!inc.secretNew;
-    S.grade = (inc.grade === 0 || (Number.isInteger(inc.grade) && inc.grade >= 1 && inc.grade <= 11)) ? inc.grade : null;
-    quizOrderCache = null;
-    refresh(); updateShop();
-    if (!$("gradeOverlay").hidden) renderGradeGrid();
-  } catch (err) {}
+  if (e.key === SAVE_KEY && e.newValue) {
+    try {
+      applySave(JSON.parse(e.newValue));
+      quizOrderCache = null;
+      refresh(); updateShop();
+      if (!$("gradeOverlay").hidden) renderGradeGrid();
+    } catch (err) {}
+  } else if (e.key === CLASS_KEY && e.newValue) {
+    try {
+      const inc = JSON.parse(e.newValue);
+      if (inc && Array.isArray(inc.students) && inc.students.length) {
+        const prevActive = CLASS.active;
+        CLASS = inc;
+        if (CLASS.active !== prevActive) { applySave(activeStudent().data); resetTransients(); refresh(); updateShop(); }
+        if (!$("boardOverlay").hidden) { renderStudents(); renderBoard(); }
+      }
+    } catch (err) {}
+  }
 });
 
 function renderAlbum() {
@@ -1319,11 +1890,22 @@ syncCtrlHint();
 
 refresh();
 updateShop();
+initNet();
 if (S.grade === null) openGrade();
 if (offlineMsg) say(offlineMsg);
 else if (S.totalPets === 0 && S.lives === 0) say("🔐 Великая цель: 9 новых жизней откроют 9 секретов Саяна — кружки и финальное фото. Гладь кота и копи лапки!");
 refreshPin();
 requestAnimationFrame(tick);
 </script>
+  <script>
+    // Инициализация отображения доски лидеров
+    $("boardBtn").onclick = () => $("boardOverlay").hidden = false;
+    $("boardClose").onclick = () => $("boardOverlay").hidden = true;
+    $("boardJoinBtn").onclick = () => {
+      $("boardOverlay").hidden = true;
+      $("authOverlay").hidden = false;
+    };
+    $("authClose").onclick = () => $("authOverlay").hidden = true;
+  </script>
 </body>
 </html>
