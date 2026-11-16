@@ -86,7 +86,7 @@
     text-shadow: 0 1px 0 var(--card);
   }
   .quiz { display: flex; flex-direction: column; gap: 8px; }
-  .quiz[hidden] { display: flex; }
+  .quiz[hidden] { display: none; }
   .quiz-title { font-size: 12.5px; font-weight: 700; color: var(--sage); }
   .quiz-close { padding: 2px 10px; font-size: 14px; }
   #quizQ { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
@@ -95,7 +95,7 @@
   #hintBtn:disabled { opacity: .5; cursor: default; }
   #quizHint { font-size: 12.5px; font-weight: 600; color: var(--amber);
     background: color-mix(in srgb, var(--amber) 12%, var(--card)); border-radius: 10px; padding: 6px 10px; }
-  #quizHint[hidden] { display: flex; }
+  #quizHint[hidden] { display: none; }
   .opts { display: flex; gap: 8px; }
   .opts button {
     flex: 1; padding: 9px 6px; border-radius: 12px; font-weight: 600; font-size: 14px;
@@ -105,7 +105,7 @@
   .opts button.right { background: var(--sage); color: #fff; opacity: 1; }
   .opts button.wrong { background: var(--amber); color: #fff; opacity: 1; }
   #quizFeedback { font-size: 12.5px; font-weight: 600; color: var(--sub); }
-  #quizFeedback[hidden] { display: flex; }
+  #quizFeedback[hidden] { display: none; }
   #quizFeedback.ok { color: var(--sage); font-size: 14.5px; font-weight: 800; }
   #quizFeedback.bad { color: var(--amber); }
   .quiz-next { width: 100%; margin-top: 9px; padding: 10px; font-size: 14px; font-weight: 800; }
@@ -113,7 +113,7 @@
   #score { font-size: 34px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
   .unit { font-size: 13px; color: var(--sub); font-weight: 600; }
   .combo { background: color-mix(in srgb, var(--amber) 18%, var(--card)); color: var(--amber); }
-  .combo[hidden] { display: flex; }
+  .combo[hidden] { display: none; }
   .level { font-size: 12px; font-weight: 600; color: var(--sage); margin-top: 6px; }
   .level .nums { color: var(--sub); font-weight: 500; }
   .bar { height: 6px; border-radius: 3px; background: var(--pill); overflow: hidden; margin-top: 5px; }
@@ -211,7 +211,7 @@
   .popup .ph-t { font-size: 10px; }
   #secretOverlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
     background: rgba(5,4,2,.62); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 16px; }
-  #secretOverlay[hidden] { display: flex; }
+  #secretOverlay[hidden] { display: none; }
   .secret { width: min(430px, 100%); max-height: min(88vh, 740px); overflow: auto; animation: pop .25s ease-out;
     background: linear-gradient(160deg, color-mix(in srgb, var(--amber) 7%, var(--card)), var(--card) 55%);
     border-color: color-mix(in srgb, var(--amber) 40%, var(--hair)); }
@@ -281,7 +281,7 @@
   .popup .grade { max-height: 92vh; }
   #boardOverlay { position: fixed; inset: 0; z-index: 55; display: flex; align-items: center; justify-content: center;
     background: rgba(0,0,0,.42); backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px); padding: 16px; }
-  #boardOverlay[hidden] { display: flex; }
+  #boardOverlay[hidden] { display: none; }
   .board { width: min(430px, 100%); max-height: min(88vh, 720px); overflow: auto; animation: pop .25s ease-out; }
   .board-title { font-size: 13px; font-weight: 800; color: var(--amber); }
   #boardCount { font-size: 12px; font-weight: 700; color: var(--sage); }
@@ -328,7 +328,7 @@
   .btn-accent:disabled { opacity: .55; }
   #authOverlay { position: fixed; inset: 0; z-index: 56; display: flex; align-items: center; justify-content: center;
     background: color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter: blur(6px); padding: 14px; }
-  #authOverlay[hidden] { display: flex; }
+  #authOverlay[hidden] { display: none; }
   .auth { width: min(420px, 100%); max-height: 92vh; overflow-y: auto; }
   .auth-tabs { display: flex; gap: 6px; margin-top: 10px; }
   .auth-tab { flex: 1; padding: 8px 10px; font-size: 13px; font-weight: 700; border-radius: 10px;
@@ -366,6 +366,7 @@
     .album { animation: none; }
     #prestigeBtn.ready { animation: none; }
   }
+[hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -1135,7 +1136,7 @@ function renderGradeGrid() {
   $("gradeMix").title = committed ? "Микс доступен только до первого выбора класса" : "";
   $("gradeClose").hidden = S.grade === null;
 }
-function openGrade() { renderGradeGrid(); $("gradeOverlay").hidden = false; }
+function openGrade() { console.log("openGrade called, S.grade:", S.grade); renderGradeGrid(); $("gradeOverlay").hidden = false; }
 function chooseGrade(g) {
   const committed = S.grade !== null && S.grade !== 0;
   if (committed && (g === 0 || g < S.grade)) return;
@@ -1329,12 +1330,16 @@ const NET_AVATARS = [
 ];
 // ⬇ Supabase: замени на свой project-ref и anon key
 const SUPA_FN = "https://ngsonqwylcwcziwxurkc.supabase.co/functions/v1/sayan";
-const NET = { available: false, user: null, board: null, syncTimer: 0 };
+const TOKEN_KEY = "sayan_web_token_v1";
+const NET = { available: false, user: null, board: null, syncTimer: 0, token: null };
+function loadToken() { try { NET.token = localStorage.getItem(TOKEN_KEY) || null; } catch (e) { NET.token = null; } }
+function storeToken(t) { NET.token = t || null; try { if (t) localStorage.setItem(TOKEN_KEY, t); else localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
 const OFFLINE_FOOT = "Это доска данного компьютера/доски: у каждого ученика свой прогресс, рейтинг собирается сам — без кодов. Переключайся чипами «Ученики», добавляй новых кнопкой ＋, убирай лишних 🗑 в строке. Имя ученика — клик по заголовку «🐾 Кот Саян».";
 
 async function netFetch(path, opts = {}) {
   const headers = { Accept: "application/json" };
   if (opts.body !== undefined) headers["content-type"] = "application/json";
+  if (NET.token) headers["Authorization"] = "Bearer " + NET.token;
   const res = await fetch(SUPA_FN + path, {
     method: opts.method || "GET", headers, credentials: "include",
     body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
@@ -1375,7 +1380,7 @@ function mergeServerUser(u) {
 async function refreshMe() {
   const r = await netFetch("/api/me");
   if (r.status === 200 && r.data && r.data.user) { NET.user = r.data.user; mergeServerUser(NET.user); }
-  else NET.user = null;
+  else { NET.user = null; if (r.status === 401) storeToken(null); }
 }
 function syncPayload() {
   return { solved: S.solved, totalPets: S.totalPets, bestCombo: S.bestCombo,
@@ -1387,7 +1392,7 @@ async function doSync() {
   if (!NET.available || !NET.user) return;
   const r = await netFetch("/api/sync", { method: "POST", body: syncPayload() });
   if (r.status === 200 && r.data && r.data.user) { NET.user = r.data.user; updateAccountBar(); if (!$("boardOverlay").hidden) renderBoard(); }
-  else if (r.status === 401) { NET.user = null; updateAccountBar(); if (!$("boardOverlay").hidden) renderBoard(); }
+  else if (r.status === 401) { NET.user = null; storeToken(null); updateAccountBar(); if (!$("boardOverlay").hidden) renderBoard(); }
 }
 function scheduleSync() {
   if (!NET.available || !NET.user || NET.syncTimer) return;
@@ -1396,8 +1401,10 @@ function scheduleSync() {
 function syncKeepalive() {
   if (!NET.available || !NET.user) return;
   try {
+    const h = { "content-type": "application/json", Accept: "application/json" };
+    if (NET.token) h["Authorization"] = "Bearer " + NET.token;
     fetch(SUPA_FN + "/api/sync", { method: "POST", credentials: "include", keepalive: true,
-      headers: { "content-type": "application/json", Accept: "application/json" }, body: JSON.stringify(syncPayload()) });
+      headers: h, body: JSON.stringify(syncPayload()) });
   } catch {}
 }
 async function fetchBoard() {
@@ -1532,6 +1539,7 @@ async function authSubmit() {
   const code = r.data && typeof r.data.error === "string" ? r.data.error : null;
   if ((r.status === 200 || r.status === 201) && r.data && r.data.user) {
     NET.user = r.data.user;
+    if (r.data.token) storeToken(r.data.token);
     if (authMode !== "profile") mergeServerUser(NET.user);
     else { S.name = NET.user.name; refresh(); save(); }
     closeAuth(); updateAccountBar();
@@ -1551,11 +1559,13 @@ $("boardJoinBtn").addEventListener("click", () => { initAudio(); tap(); openAuth
 $("boardEditBtn").addEventListener("click", () => openAuth("profile"));
 $("boardLogoutBtn").addEventListener("click", async () => {
   await netFetch("/api/logout", { method: "POST" });
+  storeToken(null);
   NET.user = null; updateAccountBar();
   if (!$("boardOverlay").hidden) renderBoard();
   say("Вышли из аккаунта 👋 Прогресс остался на этом устройстве.");
 });
 async function initNet() {
+  loadToken();
   const ok = await probeNet();
   NET.available = ok;
   if (ok) { await refreshMe(); if (NET.user) await doSync(); }
@@ -1921,7 +1931,6 @@ requestAnimationFrame(tick);
     if (foot) {
         foot.innerHTML = foot.innerHTML.replace(/ · 💾 код переноса/, "");
     }
-  </script>
   </script>
 </body>
 </html>

@@ -25,7 +25,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Accept",
+    "Access-Control-Allow-Headers": "Content-Type, Accept, Authorization",
     "Vary": "Origin",
   };
 }
@@ -51,6 +51,9 @@ function clearCookie() {
   return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=0`;
 }
 function tokenFromRequest(req: Request): string | null {
+  const auth = req.headers.get("authorization") ?? "";
+  const bearer = auth.match(/^Bearer\s+([A-Za-z0-9_-]{43})$/i);
+  if (bearer) return bearer[1];
   const hdr = req.headers.get("cookie") ?? "";
   for (const part of hdr.split(";")) {
     const [name, ...rest] = part.trim().split("=");
@@ -210,7 +213,7 @@ async function handleRegister(client: ReturnType<typeof db>, body: unknown, orig
 
   if (error || !created) return err("username_taken", 409, {}, origin);
   const token = await createSession(client, created.id);
-  return json({ user: publicUser(created) }, 201, { "Set-Cookie": setCookie(token) }, origin);
+  return json({ user: publicUser(created), token }, 201, { "Set-Cookie": setCookie(token) }, origin);
 }
 
 async function handleLogin(client: ReturnType<typeof db>, body: unknown, origin: string | null) {
@@ -232,7 +235,7 @@ async function handleLogin(client: ReturnType<typeof db>, body: unknown, origin:
   if (!ok) return err("invalid_credentials", 401, {}, origin);
 
   const token = await createSession(client, user.id);
-  return json({ user: publicUser(user) }, 200, { "Set-Cookie": setCookie(token) }, origin);
+  return json({ user: publicUser(user), token }, 200, { "Set-Cookie": setCookie(token) }, origin);
 }
 
 async function handleLogout(client: ReturnType<typeof db>, req: Request, origin: string | null) {
@@ -312,8 +315,9 @@ Deno.serve(async (req: Request) => {
   }
 
   const url = new URL(req.url);
-  // Strip the function prefix: /functions/v1/sayan/api/xxx → /api/xxx
-  const path = "/" + url.pathname.split("/").slice(url.pathname.startsWith("/functions/") ? 4 : 1).join("/");
+  // Supabase delivers /functions/v1/sayan/api/x, /sayan/api/x or /api/x — take from /api/
+  const apiIdx = url.pathname.indexOf("/api/");
+  const path = apiIdx >= 0 ? url.pathname.slice(apiIdx) : url.pathname;
 
   if (path === "/api/health" && req.method === "GET") {
     return json({ ok: true }, 200, {}, origin);
