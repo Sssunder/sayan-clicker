@@ -1908,6 +1908,11 @@ requestAnimationFrame(tick);
       $("boardOverlay").hidden = true;
       $("authOverlay").hidden = false;
     };
+    $("secretViewClose").onclick = () => $("secretView").hidden = true;
+    $("secretClose").onclick = () => $("secretOverlay").hidden = true;
+    $("gradeClose").onclick = () => $("gradeOverlay").hidden = true;
+    $("albumClose").onclick = () => $("albumOverlay").hidden = true;
+  </script>
     
     // Удаление "Код сохранения" и "Ввести код"
     const shopSection = $("shopList").parentElement;
