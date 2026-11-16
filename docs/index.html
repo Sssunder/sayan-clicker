@@ -1911,7 +1911,6 @@ requestAnimationFrame(tick);
     $("secretClose").onclick = () => $("secretOverlay").hidden = true;
     $("gradeClose").onclick = () => $("gradeOverlay").hidden = true;
     $("albumClose").onclick = () => $("albumOverlay").hidden = true;
-  </script>
     
     // Удаление "Код сохранения" и "Ввести код"
     const shopSection = $("shopList").parentElement;
@@ -1921,6 +1920,7 @@ requestAnimationFrame(tick);
     if (foot) {
         foot.innerHTML = foot.innerHTML.replace(/ · 💾 код переноса/, "");
     }
+  </script>
   </script>
 </body>
 </html>
