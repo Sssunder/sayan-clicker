@@ -186,9 +186,9 @@
   .popup .upg-name { font-size: 12px; }
   .popup .upg-eff { font-size: 10.5px; }
   .popup .buy { padding: 5px 8px; font-size: 11px; }
-  #albumOverlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+  #albumOverlay { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
     background: rgba(0,0,0,.38); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 16px; }
-  #albumOverlay[hidden] { display: flex; }
+  #albumOverlay:not([hidden]) { display: flex !important; }
   .album { width: min(430px, 100%); max-height: min(86vh, 720px); overflow: auto; animation: pop .25s ease-out; }
   @keyframes pop { from { transform: scale(.94); opacity: 0; } }
   .album-hint { font-size: 11.5px; color: var(--sub); margin-top: 6px; }
