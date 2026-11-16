@@ -375,6 +375,7 @@
     <div class="spacer"></div>
     <button class="pill icon" id="poseBtn" aria-label="Альбом фото" title="Альбом фото Саяна">🖼️</button>
     <button class="pill icon" id="secretBtn" aria-label="Тайный альбом" title="Тайный альбом: 8 кружков и финальное фото за 9 новых жизней">🔐</button>
+    <button class="pill icon" id="authBtn" aria-label="Войти" title="Войти в аккаунт">🔑</button>
     <button class="pill icon" id="boardBtn" aria-label="Таблица лидеров класса" title="Таблица лидеров класса">🏆</button>
     <button class="pill icon" id="pinBtn" aria-label="Окошко поверх всех окон" aria-pressed="false" title="Открыть отдельное окошко поверх всех окон">📌</button>
     <button class="pill icon" id="soundBtn" aria-label="Звук">🔊</button>
@@ -1898,14 +1899,24 @@ refreshPin();
 requestAnimationFrame(tick);
 </script>
   <script>
-    // Инициализация отображения доски лидеров
+    // Инициализация отображения
     $("boardBtn").onclick = () => $("boardOverlay").hidden = false;
     $("boardClose").onclick = () => $("boardOverlay").hidden = true;
+    $("authBtn").onclick = () => $("authOverlay").hidden = false;
+    $("authClose").onclick = () => $("authOverlay").hidden = true;
     $("boardJoinBtn").onclick = () => {
       $("boardOverlay").hidden = true;
       $("authOverlay").hidden = false;
     };
-    $("authClose").onclick = () => $("authOverlay").hidden = true;
+    
+    // Удаление "Код сохранения" и "Ввести код"
+    const shopSection = $("shopList").parentElement;
+    const saveCodeDiv = shopSection.querySelector(".savecode");
+    if (saveCodeDiv) saveCodeDiv.remove();
+    const foot = document.querySelector(".foot");
+    if (foot) {
+        foot.innerHTML = foot.innerHTML.replace(/ · 💾 код переноса/, "");
+    }
   </script>
 </body>
 </html>
