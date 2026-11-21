@@ -415,6 +415,7 @@
   }
 [hidden] { display: none !important; }
 </style>
+<link rel="stylesheet" href="game.css">
 </head>
 <body>
 <main class="app">
@@ -440,7 +441,7 @@
 
   <section class="card stage" id="stage" aria-label="Кот Саян">
     <div class="bubble" id="bubble">Кликни по Саяну или нажми Пробел, чтобы погладить</div>
-    <div id="catWrap"><img id="cat" src="assets/sprites/curious.png" alt="Кот Саян"></div>
+    <div id="catWrap" role="button" tabindex="0" aria-label="Погладить Саяна"><img id="cat" src="assets/sprites/curious.png" alt="Кот Саян"></div>
     <div id="fx"></div>
     <div class="hint" id="ctrlHint">Пробел — погладить · Q — задачка · H — подсказка · 1/2/3 — ответ</div>
   </section>
@@ -461,19 +462,21 @@
     <button class="pill quiz-next" id="quizNext" hidden>Следующая задачка →</button>
   </section>
 
-  <section class="card" aria-label="Прогресс">
+  <section class="card progress-card" aria-label="Прогресс">
     <div class="row wrap">
       <div class="score-big"><span id="score">0</span><span class="unit" id="unit">лапок</span></div>
       <div class="spacer"></div>
       <button class="pill" id="gradeBtn" title="Класс ученика. Смена класса — долгое нажатие (для учителя)">🎓 микс</button>
       <button class="pill" id="quizBtn" title="Попросить задачку сейчас (Q)">📐 Задачка</button>
       <span class="pill clickpill" id="clickPill">+1/клик</span>
-      <span class="pill combo" id="comboPill" hidden>Комбо x2</span>
+      <span class="pill combo" id="comboPill" hidden>2 подряд · +0 к базе</span>
     </div>
     <div class="row level"><span id="levelTitle"></span><div class="spacer"></div><span class="nums" id="levelNums"></span></div>
     <div class="bar"><div id="levelBar"></div></div>
+    <div class="progress-note">Уровень за всё время · покупки его не снижают</div>
+    <button class="photo-goal" id="photoGoal" title="Открыть альбом фото"></button>
     <div class="row energy">
-      <span>⚡</span>
+      <span id="energyStatus" role="status">Тыгыдык · заряд 0%</span>
       <div class="bar"><div id="energyBar"></div></div>
       <div class="spacer"></div>
       <span id="solved" title="Решено задачек">📐 0</span>
@@ -486,7 +489,7 @@
     </div>
   </section>
 
-  <section class="card" aria-label="Прокачка">
+  <section class="card shop-card" aria-label="Прокачка">
     <div class="row">
       <span class="shop-title">🛒 Прокачка</span>
       <div class="spacer"></div>
@@ -636,7 +639,9 @@
 "use strict";
 const D = window.SAYAN_DATA;
 const $ = id => document.getElementById(id);
-const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+let reduced = motionQuery.matches;
+motionQuery.addEventListener("change", e => { reduced = e.matches; });
 
 const SAVE_KEY = "sayan_web_save_v1";
 const store = {
@@ -829,6 +834,25 @@ const passiveRate = () => UPG.reduce((s, u) => s + (u.rate || 0) * lvl(u.id), 0)
 const quizReward = () => Math.round((D.quizReward + 15 * lvl("quiz")) * lifeMult());
 const comboWindow = () => 1.4 + .25 * lvl("combo");
 const zoomMult = () => 5 + lvl("zoom");
+const seriesBonus = n => n >= 10 ? 2 : n >= 5 ? 1 : 0;
+const effectNum = n => Number(n.toFixed(2)).toLocaleString("ru-RU");
+function upgradeValue(u, l) {
+  if (u.rate) return l * u.rate * lifeMult();
+  if (u.id === "click") return (1 + l) * lifeMult();
+  if (u.id === "quiz") return Math.round((D.quizReward + 15 * l) * lifeMult());
+  if (u.id === "combo") return 1.4 + .25 * l;
+  return 5 + l;
+}
+function upgradeEffect(u, l) {
+  const unit = u.rate ? "лапок/сек от помощника" : u.id === "click" ? "лапок/клик без серии"
+    : u.id === "quiz" ? "лапок/задачку" : u.id === "combo" ? "с между кликами" : "к награде клика";
+  const value = n => (u.id === "zoom" ? "×" : "") + effectNum(n);
+  const current = upgradeValue(u, l);
+  if (l >= u.max) return value(current) + " " + unit + " · максимум";
+  const next = upgradeValue(u, l + 1);
+  return value(current) + " → " + value(next) + " " + unit + " · +" + effectNum(next - current)
+    + (u.id === "zoom" ? " к множителю" : "");
+}
 
 function addPets(gain, silent) {
   const prev = S.pets, prevTotal = S.totalPets;
@@ -845,7 +869,7 @@ function addPets(gain, silent) {
     }
   }
   if (unlockedPhoto) return true;
-  const li0 = levelInfo(prev), li1 = levelInfo(S.pets);
+  const li0 = levelInfo(prevTotal), li1 = levelInfo(S.totalPets);
   if (li1.i > li0.i) { if (!silent) { say("Новый уровень: " + li1.title + "! 🎉"); play("levelup"); } return true; }
   if (!silent) {
     for (const k in D.milestones) {
@@ -911,6 +935,20 @@ function setPose() {
   }
 }
 
+// Полный заряд ждёт окончания отдыха, независимо от настройки анимации.
+function updateZoomies(now) {
+  if (zoomiesUntil && now >= zoomiesUntil) { zoomiesUntil = 0; energy = 0; }
+  if (!zoomiesUntil && energy >= 100 && now >= zoomiesCooldownUntil) startZoomies(now);
+  const active = now < zoomiesUntil;
+  if (active) energy = Math.max(0, 100 * (zoomiesUntil - now) / ZOOMIES_SECONDS);
+  const rest = Math.max(0, Math.ceil(zoomiesCooldownUntil - now));
+  const text = active ? "Тыгыдык ×" + zoomMult() + " · ещё " + Math.ceil(zoomiesUntil - now) + " с"
+    : rest ? "Отдых " + rest + " с · заряд " + Math.floor(energy) + "%" + (energy >= 100 ? " · старт автоматически" : "")
+    : "Тыгыдык · заряд " + Math.floor(energy) + "% · +2% за клик";
+  if ($("energyStatus").textContent !== text) $("energyStatus").textContent = text;
+  $("stage").classList.toggle("running", active);
+}
+
 function startZoomies(now) {
   zoomiesUntil = now + ZOOMIES_SECONDS;
   zoomiesCooldownUntil = now + ZOOMIES_SECONDS + ZOOMIES_COOLDOWN;
@@ -932,19 +970,19 @@ function pet() {
   combo = (now - lastPet <= comboWindow()) ? combo + 1 : 1;
   lastPet = now;
   S.bestCombo = Math.max(S.bestCombo, combo);
-  if (combo >= 10) gain += 2; else if (combo >= 5) gain += 1;
+  gain += seriesBonus(combo);
   gain *= lifeMult();
   if (now < zoomiesUntil) gain *= zoomMult();
   const celebrated = addPets(gain);
   clicks++;
   if (!sleeping) {
-    energy = Math.min(100, energy + 2);
-    if (energy >= 100 && now >= zoomiesCooldownUntil) startZoomies(now);
+    if (now >= zoomiesUntil) energy = Math.min(100, energy + 2);
+    if (energy >= 100 && now >= zoomiesUntil && now >= zoomiesCooldownUntil) startZoomies(now);
   }
   squash.vel -= 5.5;
   floatAtCat("+" + fmt(gain));
   tap();
-  if (combo === 5 && !celebrated) say("Комбо x5! Саян мурчит от восторга 🔥");
+  if ((combo === 5 || combo === 10) && !celebrated) say(combo + " подряд! +" + seriesBonus(combo) + " к базе клика до бонуса жизней и тыгыдыка 🔥");
   if (clicks % QUIZ_CADENCE === 0 && !quiz) spawnQuiz();
   refresh();
   queueSave();
@@ -1039,15 +1077,15 @@ function answer(i) {
 }
 
 function refresh() {
-  const li = levelInfo(S.pets);
+  const li = levelInfo(S.totalPets);
   $("levelTitle").textContent = "Ур. " + (li.i + 1) + " · " + li.title;
-  $("levelNums").textContent = li.next ? fmt(S.pets) + " / " + fmt(li.next[0]) : fmt(S.pets) + " · максимум";
+  $("levelNums").textContent = li.next ? fmt(S.totalPets) + " / " + fmt(li.next[0]) : fmt(S.totalPets) + " · максимум";
   $("levelBar").style.width = (li.ratio * 100).toFixed(1) + "%";
   $("solved").textContent = "📐 " + S.solved;
   $("solved").title = "Решено задачек: " + S.solved + " · банк класса: " + quizBank().length;
   $("unit").textContent = plural(Math.floor(S.pets));
-  $("clickPill").textContent = "+" + fmt(clickPower()) + "/клик";
-  $("ratePill").textContent = "+" + fmt(passiveRate()) + "/сек";
+  $("clickPill").textContent = "+" + effectNum(clickPower()) + "/клик";
+  $("ratePill").textContent = "+" + effectNum(passiveRate()) + "/сек";
   $("mood").textContent = sleeping ? "😴" : performance.now() / 1000 < zoomiesUntil ? "⚡"
     : combo >= 5 ? "😻" : "👀";
   $("nameLine").hidden = !S.name;
@@ -1085,23 +1123,22 @@ function tick(t) {
     if (now - lastAutoSave > 5) { lastAutoSave = now; save(); }
   }
   if (t - lastShopUi > 250) { lastShopUi = t; updateShop(); }
+  updateZoomies(now);
   springStep(squash, dt);
   const wrap = $("catWrap");
   let x = 0, tilt = 0, bob = 0;
   if (!reduced) {
     bob = Math.sin(now * 1.7) * 3;
     if (now < zoomiesUntil) {
-      const stageW = $("stage").clientWidth;
-      const amp = Math.max(0, stageW / 2 - wrap.offsetWidth / 2 - 10);
+      const amp = Math.max(0, $("stage").clientWidth / 2 - wrap.offsetWidth * .36 - 20);
       x = Math.sin(now * 5.2) * amp;
-      tilt = Math.cos(now * 5.2) * 7;
-      energy = Math.max(0, 100 * (zoomiesUntil - now) / ZOOMIES_SECONDS);
-    } else if (energy > 0 && now >= zoomiesUntil) {
-      energy = Math.max(0, energy - dt * 4);
+      tilt = Math.cos(now * 5.2) * 9;
     }
   }
-  const sy = 1 - .12 * squash.v, sx = 1 + .10 * squash.v;
-  wrap.style.transform = `translate(${x}px, ${bob}px) rotate(${tilt}deg) scale(${sx}, ${sy})`;
+  const runScale = now < zoomiesUntil ? .72 : 1;
+  const sy = reduced ? 1 : runScale * (1 - .12 * squash.v);
+  const sx = reduced ? 1 : runScale * (1 + .10 * squash.v);
+  $("cat").style.transform = `translate(${x}px, ${bob}px) rotate(${tilt}deg) scale(${sx}, ${sy})`;
   if (!sleeping && now - lastActivity > SLEEP_IDLE) {
     sleeping = true;
     say("Zzz… погладь, чтобы разбудить (+5) 💤");
@@ -1117,12 +1154,12 @@ function tick(t) {
   }
   if (!quiz && now > nextIdleQuiz) { nextIdleQuiz = now + 75; spawnQuiz(); }
   const cp = $("comboPill");
-  if (combo >= 2 && now - lastPet <= comboWindow()) { cp.hidden = false; cp.textContent = "Комбо x" + combo; }
+  if (combo >= 2 && now - lastPet <= comboWindow()) { cp.hidden = false; cp.textContent = combo + " подряд · +" + seriesBonus(combo) + " к базе"; }
   else cp.hidden = true;
   shownScore += (S.pets - shownScore) * Math.min(1, dt * 10);
   if (Math.abs(S.pets - shownScore) < .6) shownScore = S.pets;
   $("score").textContent = fmt(shownScore);
-  $("energyBar").style.width = energy.toFixed(0) + "%";
+  $("energyBar").style.width = Math.floor(energy) + "%";
   setPose();
   requestAnimationFrame(tick);
 }
@@ -1148,7 +1185,7 @@ $("prestigeBtn").addEventListener("click", () => {
     (n === 9 ? "\nЭТО ФИНАЛ: тот самый запретный крупный план! 🙈" : "") +
     "\n\nСбросится: лапки и прокачка этого забега.\nОстанется: тайный альбом, обычный альбом, имя, решённые задачки.\nБонус к лапкам навсегда: " + nextMult + ".")) return;
   S.lives = n; S.pets = 0; S.runPets = 0; S.upg = {};
-  combo = 0; energy = 0; clicks = 0; shownScore = 0; sleeping = false;
+  resetTransients();
   S.secretNew = true;
   hideQuiz();
   say("🔐 Секрет №" + n + " открыт: «" + sec.t + "»! Загляни в тайный альбом 🔐");
@@ -1240,6 +1277,10 @@ function boardEntries() {
 }
 function resetTransients() {
   combo = 0; energy = 0; clicks = 0; shownScore = S.pets; sleeping = false;
+  zoomiesUntil = 0; zoomiesCooldownUntil = 0; lastPet = -99; wakePoseUntil = 0;
+  squash.v = 0; squash.vel = 0;
+  lastActivity = performance.now() / 1000; nextIdleQuiz = lastActivity + 75;
+  updateZoomies(lastActivity);
   quizOrderCache = null; hideQuiz();
 }
 function switchStudent(id) {
@@ -1634,6 +1675,9 @@ async function initNet() {
 
 window.addEventListener("keydown", e => {
   if (e.repeat) return;
+  if (e.target.matches("input, textarea, select, [contenteditable]")) return;
+  if (e.target.closest("button") && e.target.id !== "catWrap") return;
+  if (["authOverlay", "albumOverlay", "secretOverlay", "secretView"].some(id => !$(id).hidden) && e.code !== "Escape") return;
   if (!$("gradeOverlay").hidden) { if (e.code === "Escape" && S.grade !== null) $("gradeOverlay").hidden = true; return; }
   if (!$("boardOverlay").hidden) { if (e.code === "Escape") $("boardOverlay").hidden = true; return; }
   if (e.code === "Space") { e.preventDefault(); pet(); }
@@ -1697,18 +1741,24 @@ function renderAlbum() {
 }
 function syncAlbumProgress() {
   const el = $("albumProgress");
+  const nextPhoto = PHOTOS.filter(p => p.th > S.totalPets).sort((a, b) => a.th - b.th)[0];
+  $("photoGoal").textContent = nextPhoto
+    ? "Ближайшее фото: «" + nextPhoto.t + "» · осталось " + fmt(Math.ceil(nextPhoto.th - S.totalPets)) + " лапок →"
+    : "Все " + PHOTOS.length + " фото открыты · посмотреть альбом →";
   const locked = PHOTOS.filter(p => S.totalPets < p.th);
   if (!locked.length) { el.textContent = "👑 Все фото открыты! Накоплено за всё время: " + fmt(S.totalPets) + " лапок."; return; }
   const next = Math.min(...locked.map(p => p.th));
   el.textContent = "Накоплено за всё время: " + fmt(S.totalPets) + " лапок (покупки не уменьшают) · до ближайшего фото осталось " + fmt(Math.max(0, next - S.totalPets));
 }
-$("poseBtn").addEventListener("click", () => {
+function openAlbum() {
   S.albumNew = false;
   renderAlbum();
   $("albumOverlay").hidden = false;
   refresh(); queueSave();
   initAudio(); tap();
-});
+}
+$("photoGoal").addEventListener("click", openAlbum);
+$("poseBtn").addEventListener("click", openAlbum);
 $("albumClose").addEventListener("click", () => { $("albumOverlay").hidden = true; });
 $("albumOverlay").addEventListener("click", e => { if (e.target === $("albumOverlay")) $("albumOverlay").hidden = true; });
 $("albumAuto").addEventListener("click", () => {
@@ -1856,7 +1906,7 @@ function updateShop() {
     const l = lvl(u.id);
     const row = $("upg-" + u.id);
     row.querySelector(".upg-lvl").textContent = l ? "ур. " + l : "";
-    row.querySelector(".upg-eff").textContent = u.eff(l);
+    row.querySelector(".upg-eff").textContent = upgradeEffect(u, l);
     const b = row.querySelector(".buy");
     if (l >= u.max) { b.textContent = "МАКС"; b.disabled = true; }
     else { const c = cost(u, l); b.textContent = fmt(c) + " 🐾"; b.disabled = S.pets < c; }
@@ -1871,7 +1921,7 @@ function buy(u) {
   S.upg[u.id] = l + 1;
   play("treat");
   squash.vel -= 3;
-  say("Куплено: " + u.name + " " + u.ico + " Теперь " + u.eff(l + 1) + "!");
+  say("Куплено: " + u.name + " " + u.ico + " · " + upgradeEffect(u, l));
   const row = $("upg-" + u.id);
   row.classList.add("bought");
   setTimeout(() => row.classList.remove("bought"), 600);
@@ -1949,7 +1999,7 @@ if (S.t && passiveRate() > 0) {
 function isTouch() { return matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0; }
 function syncCtrlHint() {
   $("ctrlHint").textContent = isTouch()
-    ? "Тапни по коту — +1 лапка · 📐 Задачка — пример · тап по варианту — ответ"
+    ? "Тапай по коту · 50 касаний заряжают тыгыдык · задачки дают бонус"
     : "Пробел — погладить · Q — задачка · H — подсказка · 1/2/3 — ответ";
   const b = $("bubble");
   if (isTouch() && b.textContent.indexOf("Пробел") >= 0) b.textContent = "Тапни по Саяну, чтобы погладить 🐾";

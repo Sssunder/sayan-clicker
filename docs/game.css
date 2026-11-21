@@ -1,0 +1,79 @@
+/* Игровой экран: одна сцена, читаемый прогресс, магазин рядом. */
+:root { --sub: #62636c; --accent: #0865c6; --sage: #217a3c; --amber: #986000; --rose: #bf2447; }
+body::before { display: none; }
+.app { width: min(1080px, 100%); padding: 24px; gap: 16px; }
+header.topbar { top: 12px; padding: 8px 12px; border-radius: 16px; background: var(--card); backdrop-filter: none; box-shadow: none; }
+.brand { font-weight: 600; min-height: 44px; font-size: 20px; }
+.brand svg { filter: none; }
+.brand { min-width: 44px; }
+@media (max-width: 400px) { html.offline .brand span { display: inline; } }
+#cat { will-change: transform; }
+#catWrap { touch-action: manipulation; }
+.toolbar { border: 0; background: none; border-radius: 12px; gap: 4px; }
+.tbtn { width: 44px; height: 44px; min-width: 44px; border-radius: 10px; }
+.tbtn svg { width: 20px; height: 20px; }
+.card { border-radius: 16px; box-shadow: none; padding: 20px; }
+.stage { min-height: 360px; gap: 16px; padding: 20px; }
+#catWrap { width: min(260px, 64vw); outline-offset: 4px; }
+#catWrap:focus-visible { outline: 3px solid var(--accent); border-radius: 20px; }
+#catWrap::before { display: none; }
+.bubble { background: transparent; padding: 0; font-size: 14px; line-height: 1.5; min-height: 48px; }
+.hint, .foot { font-size: 12px; line-height: 1.5; }
+#score { font-size: 48px; font-weight: 600; }
+.pill, .buy, .quiz-close, .opts button, #hintBtn, #prestigeBtn { min-height: 44px; border-radius: 10px; }
+.level { margin-top: 16px; font-size: 14px; flex-wrap: wrap; }
+.progress-note { color: var(--sub); font-size: 12px; margin-top: 8px; }
+.photo-goal { width: 100%; text-align: left; padding: 12px; margin-top: 12px; border-radius: 12px; min-height: 44px; font-size: 14px; line-height: 1.5; background: color-mix(in srgb, var(--accent) 8%, var(--card)); color: var(--accent); }
+.combo { font-size: 12px; }
+.ph-lock { background: rgba(0, 0, 0, .65); }
+.upg-eff { line-height: 1.5; overflow-wrap: anywhere; }
+.bar { height: 8px; border-radius: 4px; margin-top: 8px; }
+.energy { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; margin-top: 16px; font-size: 12px; }
+.energy .bar { grid-column: 1 / -1; grid-row: 2; height: 8px; width: 100%; }
+.energy .spacer { display: none; }
+#energyStatus { color: var(--text); font-weight: 600; }
+#stage.running { background: color-mix(in srgb, var(--amber) 7%, var(--card)); }
+#stage.running .bubble { color: var(--amber); font-weight: 600; }
+.prestige { gap: 8px; font-size: 12px; margin-top: 16px; }
+.shop-title { font-size: 20px; font-weight: 600; color: var(--text); }
+#shopList { gap: 8px; margin-top: 16px; }
+.upg { padding: 12px; gap: 12px; border-radius: 12px; }
+.upg-name { font-size: 14px; font-weight: 600; }
+.upg-eff { font-size: 12px; margin-top: 4px; }
+.buy { min-width: 80px; }
+.buy:disabled { opacity: 1; background: var(--pill); color: var(--sub); }
+.savecode { flex-wrap: wrap; }
+#quizBtn { background: var(--accent); color: white; }
+button:hover:not(:disabled) { filter: brightness(.96); }
+button:disabled { cursor: not-allowed; }
+.auth-input { min-height: 44px; }
+.quiz-title, #quizQ, .grade-title { font-weight: 600; }
+@media (min-width: 860px) {
+  .app { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); align-items: start; }
+  .topbar, .nameline, .foot { grid-column: 1 / -1; }
+  .stage { grid-column: 1; grid-row: 3; min-height: 390px; }
+  .progress-card { grid-column: 1; grid-row: 2; }
+  .shop-card { grid-column: 2; grid-row: 2 / span 3; }
+  .quiz { grid-column: 1; grid-row: 4; }
+}
+@media (max-width: 859px) {
+  .app { max-width: 560px; padding: 12px; }
+  header.topbar { flex-wrap: wrap; gap: 4px; top: 0; }
+  .toolbar { width: 100%; justify-content: space-between; gap: 0; padding: 0; }
+  .tbtn { flex-shrink: 0; min-width: 40px; width: 40px; height: 44px; }
+  .tsep { display: none; }
+  .card { padding: 16px; }
+  .stage { min-height: 330px; }
+  .brand { font-size: 20px; }
+}
+.popup .app { display: flex; max-width: 560px; }
+.popup .toolbar { flex-wrap: wrap; }
+.popup .tbtn { min-width: 36px; width: 36px; height: 44px; }
+.popup .stage { min-height: 240px; }
+@media (prefers-color-scheme: dark) {
+  :root { --sub: #b0b0ba; --accent: #72b4ff; --sage: #79d794; --amber: #ffc166; --rose: #ff87a0; }
+  #quizBtn { background: #0865c6; color: white; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
