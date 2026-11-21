@@ -49,12 +49,14 @@ button:hover:not(:disabled) { filter: brightness(.96); }
 button:disabled { cursor: not-allowed; }
 .auth-input { min-height: 44px; }
 .quiz-title, #quizQ, .grade-title { font-weight: 600; }
+.top-score-badge { display: inline-flex; align-items: baseline; gap: 4px; padding: 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--amber) 16%, var(--card)); color: var(--amber); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.top-score-badge .unit { font-size: 11px; opacity: .85; }
 @media (min-width: 860px) {
   .app { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); align-items: start; }
   .topbar, .nameline, .foot { grid-column: 1 / -1; }
-  .progress-card { grid-column: 1; grid-row: 2; }
+  .stage { grid-column: 1; grid-row: 2; min-height: 280px; }
   .quiz { grid-column: 1; grid-row: 3; }
-  .stage { grid-column: 1; grid-row: 4; min-height: 320px; }
+  .progress-card { grid-column: 1; grid-row: 4; }
   .shop-card { grid-column: 2; grid-row: 2 / span 4; }
 }
 @media (max-width: 859px) {
