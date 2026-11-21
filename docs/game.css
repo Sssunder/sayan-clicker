@@ -13,14 +13,15 @@ header.topbar { top: 12px; padding: 8px 12px; border-radius: 16px; background: v
 .tbtn { width: 44px; height: 44px; min-width: 44px; border-radius: 10px; }
 .tbtn svg { width: 20px; height: 20px; }
 .card { border-radius: 16px; box-shadow: none; padding: 20px; }
-.stage { min-height: 360px; gap: 16px; padding: 20px; }
-#catWrap { width: min(260px, 64vw); outline-offset: 4px; }
+.stage { min-height: 320px; gap: 14px; padding: 18px; }
+#catWrap { width: min(240px, 60vw); outline-offset: 4px; }
 #catWrap:focus-visible { outline: 3px solid var(--accent); border-radius: 20px; }
 #catWrap::before { display: none; }
 .bubble { background: transparent; padding: 0; font-size: 14px; line-height: 1.5; min-height: 48px; }
 .hint, .foot { font-size: 12px; line-height: 1.5; }
 #score { font-size: 48px; font-weight: 600; }
 .pill, .buy, .quiz-close, .opts button, #hintBtn, #prestigeBtn { min-height: 44px; border-radius: 10px; }
+.quiz { border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); box-shadow: 0 4px 16px -4px color-mix(in srgb, var(--accent) 15%, transparent); }
 .level { margin-top: 16px; font-size: 14px; flex-wrap: wrap; }
 .progress-note { color: var(--sub); font-size: 12px; margin-top: 8px; }
 .photo-goal { width: 100%; text-align: left; padding: 12px; margin-top: 12px; border-radius: 12px; min-height: 44px; font-size: 14px; line-height: 1.5; background: color-mix(in srgb, var(--accent) 8%, var(--card)); color: var(--accent); }
@@ -51,10 +52,10 @@ button:disabled { cursor: not-allowed; }
 @media (min-width: 860px) {
   .app { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); align-items: start; }
   .topbar, .nameline, .foot { grid-column: 1 / -1; }
-  .stage { grid-column: 1; grid-row: 3; min-height: 390px; }
   .progress-card { grid-column: 1; grid-row: 2; }
-  .shop-card { grid-column: 2; grid-row: 2 / span 3; }
-  .quiz { grid-column: 1; grid-row: 4; }
+  .quiz { grid-column: 1; grid-row: 3; }
+  .stage { grid-column: 1; grid-row: 4; min-height: 320px; }
+  .shop-card { grid-column: 2; grid-row: 2 / span 4; }
 }
 @media (max-width: 859px) {
   .app { max-width: 560px; padding: 12px; }

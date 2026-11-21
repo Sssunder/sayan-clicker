@@ -439,29 +439,6 @@
   </header>
   <div class="nameline" id="nameLine" hidden></div>
 
-  <section class="card stage" id="stage" aria-label="Кот Саян">
-    <div class="bubble" id="bubble">Кликни по Саяну или нажми Пробел, чтобы погладить</div>
-    <div id="catWrap" role="button" tabindex="0" aria-label="Погладить Саяна"><img id="cat" src="assets/sprites/curious.png" alt="Кот Саян"></div>
-    <div id="fx"></div>
-    <div class="hint" id="ctrlHint">Пробел — погладить · Q — задачка · H — подсказка · 1/2/3 — ответ</div>
-  </section>
-
-  <section class="card quiz" id="quizCard" hidden aria-label="Задачка">
-    <div class="row">
-      <span class="quiz-title" id="quizTitle">📐 Задачка</span>
-      <div class="spacer"></div>
-      <button class="quiz-close" id="quizClose" aria-label="Закрыть задачку">✕</button>
-    </div>
-    <div id="quizQ"></div>
-    <button class="pill" id="hintBtn" title="Показать подсказку (H)">💡 Подсказка</button>
-    <div id="quizHint" hidden></div>
-    <div class="opts" id="quizOpts">
-      <button></button><button></button><button></button>
-    </div>
-    <div id="quizFeedback" hidden></div>
-    <button class="pill quiz-next" id="quizNext" hidden>Следующая задачка →</button>
-  </section>
-
   <section class="card progress-card" aria-label="Прогресс">
     <div class="row wrap">
       <div class="score-big"><span id="score">0</span><span class="unit" id="unit">лапок</span></div>
@@ -487,6 +464,29 @@
       <div class="bar"><div id="prestigeBar"></div></div>
       <button class="pill" id="prestigeBtn">🔐 0/2 500</button>
     </div>
+  </section>
+
+  <section class="card quiz" id="quizCard" hidden aria-label="Задачка">
+    <div class="row">
+      <span class="quiz-title" id="quizTitle">📐 Задачка</span>
+      <div class="spacer"></div>
+      <button class="quiz-close" id="quizClose" aria-label="Закрыть задачку">✕</button>
+    </div>
+    <div id="quizQ"></div>
+    <button class="pill" id="hintBtn" title="Показать подсказку (H)">💡 Подсказка</button>
+    <div id="quizHint" hidden></div>
+    <div class="opts" id="quizOpts">
+      <button></button><button></button><button></button>
+    </div>
+    <div id="quizFeedback" hidden></div>
+    <button class="pill quiz-next" id="quizNext" hidden>Следующая задачка →</button>
+  </section>
+
+  <section class="card stage" id="stage" aria-label="Кот Саян">
+    <div class="bubble" id="bubble">Кликни по Саяну или нажми Пробел, чтобы погладить</div>
+    <div id="catWrap" role="button" tabindex="0" aria-label="Погладить Саяна"><img id="cat" src="assets/sprites/curious.png" alt="Кот Саян"></div>
+    <div id="fx"></div>
+    <div class="hint" id="ctrlHint">Пробел — погладить · Q — задачка · H — подсказка · 1/2/3 — ответ</div>
   </section>
 
   <section class="card shop-card" aria-label="Прокачка">
@@ -1035,6 +1035,7 @@ function spawnQuiz() {
   $("quizFeedback").className = "";
   $("quizNext").hidden = true;
   $("quizCard").hidden = false;
+  $("quizCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
   play("treat");
 }
 function showHint() {
