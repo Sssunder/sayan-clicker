@@ -22,3 +22,6 @@ vibe_images/
 Thumbs.db
 .idea/
 .vscode/
+
+# Agent artifacts
+.sharrowkin/
